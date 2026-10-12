@@ -7,9 +7,10 @@
 ## What you can run today
 - Deterministic small production-line simulator with four virtual stations.
 - Workpiece flow, production count, scrap count, equipment states and alarm log.
+- Explicit `RUNNING` / `PAUSED` / `FAULT` state model with tested fault interlocks and workpiece accounting invariants.
 - Browser dashboard and local JSON API.
 - Pause, resume, inject/clear station fault and reset operations (localhost only).
-- Automated unit tests; no dependencies, Docker or hardware required.
+- Automated unit and loopback API tests; no dependencies, Docker or hardware required.
 
 ## Quick start
 Requires Python 3.11+.
@@ -46,10 +47,12 @@ Discrete tick simulator -> Equipment/workpiece state -> JSON snapshot + event lo
 - `factorytwin/__main__.py` — local demo API and static serving.
 - `web/index.html` — zero-build production line UI.
 - `TODO.md` — progress tracker with statuses.
-- `docs/ARCHITECTURE.md` — proposed roadmap and boundaries.
+- `docs/ARCHITECTURE.md` — implemented state transitions, invariants and roadmap.
+
+The current fault model supports **one latched station fault** and blocks the whole pipeline. `resume` does not clear faults; `clear_fault` does not override `pause`. Calling `GET /api/snapshot` advances an observation tick even when production is paused or faulted, but workpieces do not move. See [state transitions and invariants](docs/ARCHITECTURE.md#ft-005-line-states-and-interlocks-implemented).
 
 ## Future (not yet implemented)
-Event timestamps and persistence, scenario designer, recipe / cycle time configuration, formal equipment state model, WebSockets, optional OPC UA adapter, OEE with clearly-defined denominator and planned time, 2D/3D animated plant map, and integration tests.
+Event persistence and deterministic replay, scenario designer, recipe / cycle time configuration, extended equipment states and recovery timing, WebSockets, optional OPC UA adapter, OEE with clearly-defined denominator and planned time, 2D/3D animated plant map, and broader integration tests.
 
 ## Safety
 This project must **never** be used as an industrial control system. The demo `/api/control` has no authentication because it binds to loopback only; it must not be exposed to untrusted networks.
