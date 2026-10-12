@@ -1,0 +1,277 @@
+{
+  "schema": "factorytwin.trace.v1",
+  "tick_duration_ms": 1000,
+  "operations": [
+    {
+      "seq": 1,
+      "kind": "step",
+      "tick": 1,
+      "sim_time_ms": 1000
+    },
+    {
+      "seq": 2,
+      "kind": "step",
+      "tick": 2,
+      "sim_time_ms": 2000
+    },
+    {
+      "seq": 3,
+      "kind": "step",
+      "tick": 3,
+      "sim_time_ms": 3000
+    },
+    {
+      "seq": 4,
+      "kind": "step",
+      "tick": 4,
+      "sim_time_ms": 4000
+    },
+    {
+      "seq": 5,
+      "kind": "step",
+      "tick": 5,
+      "sim_time_ms": 5000
+    },
+    {
+      "seq": 6,
+      "kind": "control",
+      "tick": 5,
+      "sim_time_ms": 5000,
+      "action": "pause"
+    },
+    {
+      "seq": 7,
+      "kind": "step",
+      "tick": 6,
+      "sim_time_ms": 6000
+    },
+    {
+      "seq": 8,
+      "kind": "step",
+      "tick": 7,
+      "sim_time_ms": 7000
+    },
+    {
+      "seq": 9,
+      "kind": "control",
+      "tick": 7,
+      "sim_time_ms": 7000,
+      "action": "fault",
+      "station": "Processing"
+    },
+    {
+      "seq": 10,
+      "kind": "control",
+      "tick": 7,
+      "sim_time_ms": 7000,
+      "action": "resume"
+    },
+    {
+      "seq": 11,
+      "kind": "step",
+      "tick": 8,
+      "sim_time_ms": 8000
+    },
+    {
+      "seq": 12,
+      "kind": "control",
+      "tick": 8,
+      "sim_time_ms": 8000,
+      "action": "clear_fault"
+    },
+    {
+      "seq": 13,
+      "kind": "step",
+      "tick": 9,
+      "sim_time_ms": 9000
+    },
+    {
+      "seq": 14,
+      "kind": "step",
+      "tick": 10,
+      "sim_time_ms": 10000
+    },
+    {
+      "seq": 15,
+      "kind": "step",
+      "tick": 11,
+      "sim_time_ms": 11000
+    },
+    {
+      "seq": 16,
+      "kind": "step",
+      "tick": 12,
+      "sim_time_ms": 12000
+    },
+    {
+      "seq": 17,
+      "kind": "step",
+      "tick": 13,
+      "sim_time_ms": 13000
+    }
+  ],
+  "final_state": {
+    "tick": 13,
+    "sim_time_ms": 13000,
+    "state": "RUNNING",
+    "running": true,
+    "fault_station": null,
+    "completed": 6,
+    "scrapped": 0,
+    "next_id": 11,
+    "conveyor": [
+      {
+        "id": "WP-0010"
+      },
+      {
+        "id": "WP-0009"
+      },
+      {
+        "id": "WP-0008"
+      },
+      {
+        "id": "WP-0007"
+      }
+    ],
+    "event_sequence": 20,
+    "events": [
+      {
+        "tick": 1,
+        "event": "workpiece_created",
+        "seq": 1,
+        "sim_time_ms": 1000,
+        "workpiece_id": "WP-0001"
+      },
+      {
+        "tick": 2,
+        "event": "workpiece_created",
+        "seq": 2,
+        "sim_time_ms": 2000,
+        "workpiece_id": "WP-0002"
+      },
+      {
+        "tick": 3,
+        "event": "workpiece_created",
+        "seq": 3,
+        "sim_time_ms": 3000,
+        "workpiece_id": "WP-0003"
+      },
+      {
+        "tick": 4,
+        "event": "workpiece_created",
+        "seq": 4,
+        "sim_time_ms": 4000,
+        "workpiece_id": "WP-0004"
+      },
+      {
+        "tick": 5,
+        "event": "workpiece_completed",
+        "seq": 5,
+        "sim_time_ms": 5000,
+        "workpiece_id": "WP-0001"
+      },
+      {
+        "tick": 5,
+        "event": "workpiece_created",
+        "seq": 6,
+        "sim_time_ms": 5000,
+        "workpiece_id": "WP-0005"
+      },
+      {
+        "tick": 5,
+        "event": "line_paused",
+        "seq": 7,
+        "sim_time_ms": 5000
+      },
+      {
+        "tick": 7,
+        "event": "fault_injected",
+        "seq": 8,
+        "sim_time_ms": 7000,
+        "station": "Processing"
+      },
+      {
+        "tick": 7,
+        "event": "line_resumed",
+        "seq": 9,
+        "sim_time_ms": 7000
+      },
+      {
+        "tick": 8,
+        "event": "fault_cleared",
+        "seq": 10,
+        "sim_time_ms": 8000
+      },
+      {
+        "tick": 9,
+        "event": "workpiece_completed",
+        "seq": 11,
+        "sim_time_ms": 9000,
+        "workpiece_id": "WP-0002"
+      },
+      {
+        "tick": 9,
+        "event": "workpiece_created",
+        "seq": 12,
+        "sim_time_ms": 9000,
+        "workpiece_id": "WP-0006"
+      },
+      {
+        "tick": 10,
+        "event": "workpiece_completed",
+        "seq": 13,
+        "sim_time_ms": 10000,
+        "workpiece_id": "WP-0003"
+      },
+      {
+        "tick": 10,
+        "event": "workpiece_created",
+        "seq": 14,
+        "sim_time_ms": 10000,
+        "workpiece_id": "WP-0007"
+      },
+      {
+        "tick": 11,
+        "event": "workpiece_completed",
+        "seq": 15,
+        "sim_time_ms": 11000,
+        "workpiece_id": "WP-0004"
+      },
+      {
+        "tick": 11,
+        "event": "workpiece_created",
+        "seq": 16,
+        "sim_time_ms": 11000,
+        "workpiece_id": "WP-0008"
+      },
+      {
+        "tick": 12,
+        "event": "workpiece_completed",
+        "seq": 17,
+        "sim_time_ms": 12000,
+        "workpiece_id": "WP-0005"
+      },
+      {
+        "tick": 12,
+        "event": "workpiece_created",
+        "seq": 18,
+        "sim_time_ms": 12000,
+        "workpiece_id": "WP-0009"
+      },
+      {
+        "tick": 13,
+        "event": "workpiece_completed",
+        "seq": 19,
+        "sim_time_ms": 13000,
+        "workpiece_id": "WP-0006"
+      },
+      {
+        "tick": 13,
+        "event": "workpiece_created",
+        "seq": 20,
+        "sim_time_ms": 13000,
+        "workpiece_id": "WP-0010"
+      }
+    ]
+  }
+}
