@@ -45,6 +45,9 @@ class ApiCompatibilityTest(unittest.TestCase):
         self.assertEqual(snapshot["tick"], 1)
         self.assertEqual(snapshot["state"], "RUNNING")
         self.assertEqual(snapshot["in_process"], 1)
+        self.assertEqual(snapshot["sim_time_ms"], 1000)
+        self.assertEqual(snapshot["events"][0]["seq"], 1)
+        self.assertEqual(snapshot["events"][0]["sim_time_ms"], 1000)
 
     def test_control_transitions_keep_response_shape(self):
         for action, station, expected_state in (
