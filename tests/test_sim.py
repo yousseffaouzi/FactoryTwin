@@ -157,7 +157,7 @@ class FactoryTwinTest(unittest.TestCase):
         self.assertEqual(line.scrapped, 0)
         self.assertIsNone(line.fault_station)
         self.assertEqual(line.conveyor, [None] * len(STATIONS))
-        self.assertEqual(line.events, [{"tick": 0, "event": "simulation_reset"}])
+        self.assertEqual(line.events, [{"tick": 0, "event": "simulation_reset", "seq": 1, "sim_time_ms": 0}])
         line.step()
         self.assertEqual(line.next_id, 2)
 
