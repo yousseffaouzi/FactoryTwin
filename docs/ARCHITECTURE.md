@@ -2,7 +2,7 @@
 
 ## Prototype (implemented)
 
-`ProductionLine.step()` is a discrete observation tick. A workpiece passes through feeder, conveyor, processing and packing stations with one processing step per stage. A single latched station fault blocks movement throughout this simple line. A local HTTP API exposes snapshots and demo controls.
+`ProductionLine.step()` is a discrete observation tick. By default a workpiece passes through feeder, conveyor, processing and packing stations with one productive tick per stage. FT-007 also permits a validated linear station graph with configurable cycle ticks. A single latched station fault blocks movement throughout this simple line. A local HTTP API exposes snapshots and demo controls.
 
 ## FT-005: line states and interlocks (implemented)
 
@@ -37,7 +37,7 @@ Only `RUNNING`, `PAUSED` and `FAULT` are presently supported. `IDLE`, `RECOVERIN
 
 `ProductionLine.validate()` checks before/after processing and before accepting ordinary controls:
 
-1. Exactly four pipeline slots exist, one per known station.
+1. Exactly one pipeline slot exists per configured station (four in the default demo); the station graph is a validated single route.
 2. The enabled flag is Boolean and the latched fault references a known station.
 3. Tick/counters are non-negative integers, and the next generated ID is positive.
 4. Active workpieces have distinct, generated `WP-` IDs; generated IDs are not reused.
@@ -97,12 +97,32 @@ assert replayed.state_data() == live.state_data()
 
 The committed fixture `tests/fixtures/replay_scenario_v1.json` covers production, pause, fault injection, recovery, and continued production. No new HTTP route is exposed for trace importing or replay; the existing localhost-only API remains intact.
 
-**Limitations:** The full operation journal grows in memory until a reset; no durability, compression or automatic retention is provided yet (FT-009). Replay currently caps an input at 1,000,000 operations to limit resource consumption; very long uninterrupted sessions may exceed that cap and require future trace segmentation. The clock is fixed at one logical second per tick, and there is no configurable cycle-time or independent simulated event scheduler (FT-007). Reproducibility is restricted to this trace version and implementation; schema evolution/migrations are future work.
+**Limitations:** The full operation journal grows in memory until a reset; no durability, compression or automatic retention is provided yet (FT-009). Replay currently caps an input at 1,000,000 operations to limit resource consumption; very long uninterrupted sessions may exceed that cap and require future trace segmentation. The clock is fixed at one logical second per tick; station cycle lengths are now configurable in FT-007, but there is still no independent simulated event scheduler. Reproducibility is restricted to this trace version and implementation; schema evolution/migrations are future work.
+
+## FT-007: configurable station graph and cycle ticks (implemented)
+
+FactoryTwin accepts **local JSON blueprints** with three required keys: `version` (integer 1), `stations` (objects with unique `id` and positive integer `cycle_ticks`), and `connections` (directed `from`/`to` edges). The parser rejects unknown fields, unknown nodes, duplicate IDs or edges, cycles, disconnected segments, multiple inputs/outputs, branching and merging. It accepts 1–32 stations with cycle lengths from 1–10,000 productive ticks. Station IDs use letters, digits, underscore and hyphen, beginning with a letter, up to 32 characters.
+
+The current scope intentionally supports **one non-branching chain**, with exactly one entry station and one exit. Source file ordering does not determine the route: graph validation orders stations from entry to exit. `factorytwin/blueprint.py` exposes `FactoryBlueprint.from_dict()`, `FactoryBlueprint.load()`, and `to_dict()`; `ProductionLine.from_blueprint(data)` creates an isolated run.
+
+Example: [`config/assembly_line.json`](../config/assembly_line.json) specifies the linear chain `Feed (1 tick) → Inspect (2 ticks) → Pack (1 tick)`. Start the local dashboard with:
+
+```bash
+python -m factorytwin --blueprint config/assembly_line.json
+```
+
+Each station has one workpiece slot. An item arriving at a station requires exactly `cycle_ticks` **productive observation ticks** before transfer or completion. A station whose work is complete may be blocked if the next slot is occupied; its `remaining_ticks` stays zero until it can transfer. Updates use downstream-first processing: a workpiece moves at most one station per tick, and a downstream completion can free its slot for an upstream transfer in that same tick. An empty entry station injects one new synthetic workpiece on a productive tick. Pausing or a latched fault freezes processing, transfers and injection while observation ticks still advance. `reset` clears the session, but **preserves the validated blueprint**.
+
+The existing `GET /api/snapshot` and `POST /api/control` endpoints work unchanged. `stations[]` now additionally exposes `cycle_ticks` and `remaining_ticks`; the dashboard dynamically populates the fault-station selector using the configured station names. The default 4-station, 1-tick line preserves its existing counters, event ordering, snapshots' original fields, and unmodified `factorytwin.trace.v1` replay fixture.
+
+Custom non-default blueprints export `factorytwin.trace.v2` with their canonical blueprint and remaining processing ticks included in `final_state`. Replay validates the blueprint, reconstructs processing progress, and rejects state divergence. Existing `trace.v1` files still replay with the default four-station line. No new network endpoints for trace import/export or for editing blueprints are provided. Changes require restarting the local simulator with another blueprint.
+
+**Not yet supported:** queues larger than one, branching/merging, parallel machines, rework, recipes, changeover times, random faults, yield modeling, physically calibrated performance, or operating equipment. These require explicit routing and timing semantics before implementation.
 
 ## Planned core
 
-- Model productive machine time separately from observation ticks, with configurable cycle durations and fast-forward.
-- Configurable station blueprints: type, cycle time, queue capacity, failure profile, downstream routes.
+- Model productive machine time separately from observation ticks and support fast-forward.
+- Enrich station blueprints with equipment types, queue capacities, failure profiles and multi-route graphs.
 - Durable event persistence, full event-sourced state transitions, workpiece genealogy and audits.
 - Defined production KPIs: good/scrap units, throughput, availability/performance/quality from known schedule.
 - UI plant map and transport/state animation.

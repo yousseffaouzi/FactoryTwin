@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "stations": [
+    {"id": "Pack", "cycle_ticks": 1},
+    {"id": "Inspect", "cycle_ticks": 2},
+    {"id": "Feed", "cycle_ticks": 1}
+  ],
+  "connections": [
+    {"from": "Inspect", "to": "Pack"},
+    {"from": "Feed", "to": "Inspect"}
+  ]
+}

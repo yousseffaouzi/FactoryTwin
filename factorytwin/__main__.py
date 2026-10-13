@@ -1,8 +1,11 @@
-"""Local-only demo server: python -m factorytwin"""
+"""Local-only demo server: python -m factorytwin [--blueprint FILE]"""
+import argparse
 import json
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from threading import Lock
+
+from .blueprint import FactoryBlueprint
 from .sim import ProductionLine
 
 ROOT = Path(__file__).resolve().parents[1] / "web"
@@ -51,7 +54,13 @@ class Handler(SimpleHTTPRequestHandler):
             self.respond(400, {"error": str(exc)})
 
 
-def main():
+def main(argv: list[str] | None = None):
+    parser = argparse.ArgumentParser(description="FactoryTwin synthetic factory simulator")
+    parser.add_argument("--blueprint", type=Path, help="validated local JSON station graph")
+    args = parser.parse_args(argv)
+    global SIM
+    if args.blueprint is not None:
+        SIM = ProductionLine(blueprint=FactoryBlueprint.load(args.blueprint))
     httpd = ThreadingHTTPServer(("127.0.0.1", 8766), Handler)
     print("FactoryTwin (simulated factory): http://127.0.0.1:8766")
     try:
