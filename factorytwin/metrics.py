@@ -8,11 +8,7 @@ from pathlib import Path
 
 @dataclass(frozen=True)
 class MetricsPlan:
-    """Declares whether observation ticks are planned production time.
-
-    OEE is intentionally undefined unless `planned_observation_ticks` is true
-    and an explicit ideal cycle baseline is supplied.
-    """
+    """Declares whether observation ticks are planned production time."""
 
     planned_observation_ticks: bool = False
     ideal_cycle_ticks: int | None = None
@@ -22,11 +18,8 @@ class MetricsPlan:
         return self.planned_observation_ticks
 
     def to_dict(self) -> dict:
-        return {
-            "version": 1,
-            "planned_observation_ticks": self.planned_observation_ticks,
-            "ideal_cycle_ticks": self.ideal_cycle_ticks,
-        }
+        return {"version": 1, "planned_observation_ticks": self.planned_observation_ticks,
+                "ideal_cycle_ticks": self.ideal_cycle_ticks}
 
     @classmethod
     def from_dict(cls, data: dict) -> "MetricsPlan":
@@ -35,8 +28,7 @@ class MetricsPlan:
                 type(data["version"]) is not int or data["version"] != 1 or
                 type(data["planned_observation_ticks"]) is not bool):
             raise ValueError("invalid metrics plan")
-        planned = data["planned_observation_ticks"]
-        ideal = data["ideal_cycle_ticks"]
+        planned, ideal = data["planned_observation_ticks"], data["ideal_cycle_ticks"]
         if planned:
             if type(ideal) is not int or not 1 <= ideal <= 10_000:
                 raise ValueError("enabled metrics plan requires ideal_cycle_ticks 1..10000")
@@ -57,32 +49,31 @@ DEFAULT_METRICS_PLAN = MetricsPlan()
 
 
 def _productive_observation_ticks(operations: list[dict]) -> tuple[int, int]:
-    """Return (observation ticks, ticks where production was enabled).
-
-    This derives only from the deterministic operation journal. A RUNNING step
-    counts as production-enabled even when normal backpressure means no unit
-    completes on that exact tick.
-    """
+    """Return observation ticks and ticks where production was interlock-enabled."""
     running = True
-    fault_station: str | None = None
+    faults: set[str] = set()
     observations = productive = 0
     for operation in operations:
         if operation.get("kind") == "control":
             action = operation.get("action")
             if action == "reset":
                 running = True
-                fault_station = None
+                faults.clear()
             elif action == "pause":
                 running = False
             elif action == "resume":
                 running = True
-            elif action == "fault":
-                fault_station = operation.get("station")
+            elif action in ("fault", "fault_add"):
+                station = operation.get("station")
+                if isinstance(station, str):
+                    faults.add(station)
             elif action == "clear_fault":
-                fault_station = None
+                faults.clear()
+            elif action == "clear_fault_station":
+                faults.discard(operation.get("station"))
         elif operation.get("kind") == "step":
             observations += 1
-            if running and fault_station is None:
+            if running and not faults:
                 productive += 1
     return observations, productive
 
@@ -95,11 +86,8 @@ def production_metrics(line, plan: MetricsPlan | None = None) -> dict:
     observations, productive = _productive_observation_ticks(line.operations)
     terminal = line.completed + line.scrapped
     quality = (line.completed / terminal) if terminal else None
-
     planned_ticks = observations if selected.enabled else None
-    availability = None
-    performance = None
-    oee = None
+    availability = performance = oee = None
     warnings: list[str] = []
     if selected.enabled:
         if planned_ticks:
@@ -107,30 +95,21 @@ def production_metrics(line, plan: MetricsPlan | None = None) -> dict:
         if productive:
             performance = selected.ideal_cycle_ticks * terminal / productive
             if performance > 1.0:
-                warnings.append(
-                    "performance exceeds 1.0; verify the declared ideal cycle baseline")
+                warnings.append("performance exceeds 1.0; verify the declared ideal cycle baseline")
         if availability is not None and performance is not None and quality is not None:
             oee = availability * performance * quality
     return {
-        "scope": "synthetic_session",
-        "observation_ticks": observations,
-        "planned_ticks": planned_ticks,
-        "production_enabled_ticks": productive,
-        "good_units": line.completed,
-        "scrapped_units": line.scrapped,
+        "scope": "synthetic_session", "observation_ticks": observations,
+        "planned_ticks": planned_ticks, "production_enabled_ticks": productive,
+        "good_units": line.completed, "scrapped_units": line.scrapped,
         "terminal_units": terminal,
         "in_process": sum(piece is not None for piece in line.conveyor),
-        "quality": quality,
-        "availability": availability,
-        "performance": performance,
-        "oee": oee,
-        "ideal_cycle_ticks": selected.ideal_cycle_ticks,
-        "plan": selected.to_dict(),
-        "warnings": warnings,
+        "quality": quality, "availability": availability, "performance": performance,
+        "oee": oee, "ideal_cycle_ticks": selected.ideal_cycle_ticks,
+        "plan": selected.to_dict(), "warnings": warnings,
         "definitions": {
             "availability": "production_enabled_ticks / planned_ticks",
             "performance": "ideal_cycle_ticks * terminal_units / production_enabled_ticks",
-            "quality": "good_units / terminal_units",
-            "oee": "availability * performance * quality",
+            "quality": "good_units / terminal_units", "oee": "availability * performance * quality",
         },
     }
