@@ -5,10 +5,10 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 import json
 
-from .blueprint import DEFAULT_BLUEPRINT, FactoryBlueprint
+from .blueprint import FactoryBlueprint
 from .genealogy import GenealogyProductionLine
-from .quality import DEFAULT_QUALITY_SCENARIO, QualityScenario
-from .sim import CUSTOM_TRACE_SCHEMA, MAX_REPLAY_OPERATIONS, QUALITY_TRACE_SCHEMA, TRACE_SCHEMA, LineState, TICK_DURATION_MS
+from .quality import QualityScenario
+from .sim import MAX_REPLAY_OPERATIONS, LineState, TICK_DURATION_MS
 
 MULTI_FAULT_TRACE_SCHEMA = "factorytwin.trace.v4"
 
@@ -60,36 +60,53 @@ class MultiFaultProductionLine(GenealogyProductionLine):
         self.operations.append(operation)
 
     def control(self, action: str, station: str | None = None) -> None:
-        if action not in ("fault_add", "clear_fault_station"):
-            # Legacy controls preserve their historical behavior. After parent
-            # reset/fault/clear we mirror the single legacy latch into the list.
-            super().control(action, station)
-            if action == "reset":
-                self.fault_stations = []
-                self._multi_fault_used = False
-            elif action == "fault":
-                self.fault_stations = [self.fault_station] if self.fault_station else []
-            elif action == "clear_fault":
-                self.fault_stations = []
-            self._sync_fault_alias()
+        # Keep the old one-fault command behavior exactly. A second distinct
+        # legacy `fault` is still rejected; simultaneous latches require fault_add.
+        if action == "fault":
             self.validate()
-            return
-
-        self.validate()
-        if station not in self.blueprint.station_ids:
-            raise ValueError("unknown station")
-        self._multi_fault_used = True
-        if action == "fault_add":
-            if station not in self.fault_stations:
-                self.fault_stations.append(station)
+            if station not in self.blueprint.station_ids:
+                raise ValueError("unknown station")
+            if self.fault_stations and station not in self.fault_stations:
+                raise ValueError("fault already active; clear it before selecting another station")
+            if not self.fault_stations:
+                self.fault_stations = [station]
                 self._sync_fault_alias()
                 self.log("fault_injected", station=station)
-        else:
-            if station in self.fault_stations:
+            self._record("control", action="fault", station=station)
+            self.validate()
+            return
+        if action == "clear_fault":
+            self.validate()
+            if self.fault_stations:
+                self.fault_stations = []
+                self._sync_fault_alias()
+                self.log("fault_cleared")
+            self._record("control", action="clear_fault")
+            self.validate()
+            return
+        if action in ("fault_add", "clear_fault_station"):
+            self.validate()
+            if station not in self.blueprint.station_ids:
+                raise ValueError("unknown station")
+            self._multi_fault_used = True
+            if action == "fault_add":
+                if station not in self.fault_stations:
+                    self.fault_stations.append(station)
+                    self._sync_fault_alias()
+                    self.log("fault_injected", station=station)
+            elif station in self.fault_stations:
                 self.fault_stations.remove(station)
                 self._sync_fault_alias()
                 self.log("fault_cleared", station=station)
-        self._record_extended_control(action, station)
+            self._record_extended_control(action, station)
+            self.validate()
+            return
+
+        # pause/resume/reset and invalid controls retain parent behavior. Reset
+        # rebuilds type(self), therefore clears all fault latches and v4 usage.
+        super().control(action, station)
+        if action == "reset":
+            self._sync_fault_alias()
         self.validate()
 
     def snapshot(self) -> dict:
@@ -115,14 +132,11 @@ class MultiFaultProductionLine(GenealogyProductionLine):
     def export_trace(self) -> dict:
         if not self._multi_fault_used:
             return super().export_trace()
-        return {
-            "schema": MULTI_FAULT_TRACE_SCHEMA,
-            "tick_duration_ms": TICK_DURATION_MS,
-            "blueprint": self.blueprint.to_dict(),
-            "quality_scenario": self.quality_scenario.to_dict(),
-            "operations": deepcopy(self.operations),
-            "final_state": self.multi_fault_state_data(),
-        }
+        return {"schema": MULTI_FAULT_TRACE_SCHEMA, "tick_duration_ms": TICK_DURATION_MS,
+                "blueprint": self.blueprint.to_dict(),
+                "quality_scenario": self.quality_scenario.to_dict(),
+                "operations": deepcopy(self.operations),
+                "final_state": self.multi_fault_state_data()}
 
     @classmethod
     def replay(cls, trace: dict):
@@ -140,7 +154,6 @@ class MultiFaultProductionLine(GenealogyProductionLine):
         if not isinstance(operations, list) or len(operations) > MAX_REPLAY_OPERATIONS:
             raise ValueError("invalid trace operation count")
         line = cls(blueprint=blueprint, quality_scenario=quality)
-        extended = {"fault_add", "clear_fault_station"}
         for index, operation in enumerate(operations, 1):
             if not isinstance(operation, dict):
                 raise ValueError(f"invalid trace record {index}")
@@ -150,17 +163,15 @@ class MultiFaultProductionLine(GenealogyProductionLine):
             elif kind == "control":
                 action = operation.get("action")
                 keys = {"seq", "kind", "tick", "sim_time_ms", "action"}
-                if action in ("fault", *extended):
+                if action in ("fault", "fault_add", "clear_fault_station"):
                     keys.add("station")
             else:
                 raise ValueError(f"invalid trace record {index}")
-            if set(operation) != keys or type(operation.get("seq")) is not int or operation["seq"] != index:
+            if (set(operation) != keys or type(operation.get("seq")) is not int or
+                    operation["seq"] != index):
                 raise ValueError(f"invalid trace record {index}")
             try:
-                if kind == "step":
-                    line.step()
-                else:
-                    line.control(operation["action"], operation.get("station"))
+                line.step() if kind == "step" else line.control(operation["action"], operation.get("station"))
             except (ValueError, TypeError) as exc:
                 raise ValueError(f"invalid trace transition {index}: {exc}") from exc
             if (type(operation["tick"]) is not int or type(operation["sim_time_ms"]) is not int or
