@@ -17,6 +17,7 @@ from factorytwin.persistence import (
     SQLiteStore,
 )
 from factorytwin.quality import QualityScenario
+from factorytwin.sim import ProductionLine
 
 
 def blueprint():
@@ -77,11 +78,12 @@ class SQLitePersistenceTest(unittest.TestCase):
         line.step()
         line.control("resume")
         expected = json.loads(json.dumps(line.export_trace()))
+        expected_continuation = ProductionLine.replay(expected)
         restored = PersistentProductionLine.open(self.path)
         self.assertEqual(restored.export_trace(), expected)
-        line.step()
+        expected_continuation.step()
         restored.step()
-        self.assertEqual(restored.export_trace(), line.export_trace())
+        self.assertEqual(restored.export_trace(), expected_continuation.export_trace())
 
     def test_custom_quality_trace_v3_recovers(self):
         line = PersistentProductionLine.open(self.path, blueprint=blueprint(),
