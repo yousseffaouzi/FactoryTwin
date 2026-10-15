@@ -1,4 +1,4 @@
-"""Local-only FactoryTwin demo server with optional persistence and metrics."""
+"""Local-only FactoryTwin demo server with persistence, metrics and SSE."""
 import argparse
 import json
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -11,10 +11,12 @@ from .metrics import DEFAULT_METRICS_PLAN, MetricsPlan
 from .persistence import PersistenceError, PersistentProductionLine
 from .quality import DEFAULT_QUALITY_SCENARIO, QualityScenario
 from .sim import ProductionLine
+from .streaming import SnapshotStreamHub
 
 ROOT = Path(__file__).resolve().parents[1] / "web"
 SIM = ProductionLine()
 LOCK = Lock()
+STREAM = SnapshotStreamHub()
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -30,15 +32,56 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(payload)
 
+    def _stream(self):
+        raw_last_id = self.headers.get("Last-Event-ID")
+        try:
+            last_id = None if raw_last_id in (None, "") else int(raw_last_id)
+            if last_id is not None and last_id < 0:
+                raise ValueError
+        except ValueError:
+            return self.respond(400, {"error": "invalid Last-Event-ID"})
+        with LOCK:
+            current = SIM.snapshot()  # read-only: streaming never advances the observation tick
+        frames = STREAM.reconnect(last_id, current)
+        cursor = last_id if last_id is not None else STREAM.latest_id
+        self.send_response(200)
+        self.send_header("Content-Type", "text/event-stream; charset=utf-8")
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Connection", "keep-alive")
+        self.end_headers()
+        try:
+            while True:
+                for frame in frames:
+                    payload = json.dumps(frame.data, separators=(",", ":"))
+                    self.wfile.write(
+                        f"id: {frame.id}\nevent: {frame.event}\ndata: {payload}\n\n".encode("utf-8"))
+                    cursor = frame.id
+                if frames:
+                    self.wfile.flush()
+                frames = STREAM.wait_after(cursor)
+                if not frames:
+                    # Keep-alive comments are not events and do not advance the simulator.
+                    self.wfile.write(b": keep-alive\n\n")
+                    self.wfile.flush()
+                    # If the cursor fell behind the bounded buffer, explicitly resync.
+                    with LOCK:
+                        current = SIM.snapshot()
+                    frames = STREAM.reconnect(cursor, current)
+        except (BrokenPipeError, ConnectionResetError, TimeoutError, OSError):
+            return
+
     def do_GET(self):
         path = urlsplit(self.path).path
         if path == "/api/snapshot":
             try:
                 with LOCK:
                     snapshot = SIM.step()
+                STREAM.publish(snapshot)
                 self.respond(200, snapshot)
             except PersistenceError as exc:
                 self.respond(503, {"error": str(exc)})
+        elif path == "/api/stream":
+            self._stream()
         elif path == "/api/health":
             self.respond(200, {"status": "ok", "source": "simulation"})
         elif path.startswith("/api/workpieces/"):
@@ -67,6 +110,7 @@ class Handler(SimpleHTTPRequestHandler):
             with LOCK:
                 SIM.control(data.get("action", ""), data.get("station"))
                 state = SIM.snapshot()
+            STREAM.publish(state)
             self.respond(200, state)
         except PersistenceError as exc:
             self.respond(503, {"error": str(exc)})
@@ -89,7 +133,7 @@ def main(argv: list[str] | None = None):
                          if args.quality_scenario is not None else None)
     metrics_plan = (MetricsPlan.load(args.metrics_plan)
                     if args.metrics_plan is not None else DEFAULT_METRICS_PLAN)
-    global SIM
+    global SIM, STREAM
     if args.database is not None:
         SIM = PersistentProductionLine.open(args.database, blueprint=requested_blueprint,
                                             quality_scenario=requested_quality)
@@ -97,6 +141,7 @@ def main(argv: list[str] | None = None):
         SIM = ProductionLine(blueprint=requested_blueprint or DEFAULT_BLUEPRINT,
                              quality_scenario=requested_quality or DEFAULT_QUALITY_SCENARIO)
     SIM.metrics_plan = metrics_plan
+    STREAM = SnapshotStreamHub()
     httpd = ThreadingHTTPServer(("127.0.0.1", 8766), Handler)
     print("FactoryTwin (simulated factory): http://127.0.0.1:8766")
     try:
