@@ -24,6 +24,6 @@ The dashboard loads no external scripts, fonts, images or CDNs. Snapshot-derived
 
 ## Visual review
 
-`docs/assets/ft012-floor-desktop.png` is a reproducible Chromium capture of the real `web/index.html` with a fixed synthetic snapshot injected only for rendering review. It demonstrates the desktop route, status text, cycle progress, KPI cards and simulation boundary notice. The capture is documentation evidence, not a physical-factory screenshot.
+The milestone validation process renders the exact committed `web/index.html` in headless Chromium with a fixed synthetic snapshot injected only for display review. Desktop (1440 px) and mobile (390 px) captures are attached to the development report rather than stored as runtime assets. They verify route direction, readable state text, cycle progress, controls, responsive reflow, metrics and the simulation-boundary notice. These are documentation captures of synthetic UI state, not physical-factory screenshots.
 
 Static contract tests in `tests/test_web_ui.py` check landmarks, labels, responsive/reduced-motion CSS, polling/SSE fallback, undefined OEE rendering, escaping hooks, local-only frontend resources and absence of a 3D runtime.
