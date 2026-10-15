@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "decisions": [
+    {"workpiece_id": "WP-0002", "station": "Inspect", "attempt": 1, "outcome": "REWORK"},
+    {"workpiece_id": "WP-0003", "station": "Inspect", "attempt": 1, "outcome": "SCRAP"}
+  ]
+}

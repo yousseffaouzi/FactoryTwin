@@ -1,11 +1,13 @@
-"""Local-only demo server: python -m factorytwin [--blueprint FILE]"""
+"""Local-only demo server: python -m factorytwin [--blueprint FILE] [--quality-scenario FILE]"""
 import argparse
 import json
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from threading import Lock
+from urllib.parse import unquote, urlsplit
 
-from .blueprint import FactoryBlueprint
+from .blueprint import DEFAULT_BLUEPRINT, FactoryBlueprint
+from .quality import DEFAULT_QUALITY_SCENARIO, QualityScenario
 from .sim import ProductionLine
 
 ROOT = Path(__file__).resolve().parents[1] / "web"
@@ -27,17 +29,28 @@ class Handler(SimpleHTTPRequestHandler):
         self.wfile.write(payload)
 
     def do_GET(self):
-        if self.path == "/api/snapshot":
+        path = urlsplit(self.path).path
+        if path == "/api/snapshot":
             with LOCK:
                 snapshot = SIM.step()
             self.respond(200, snapshot)
-        elif self.path == "/api/health":
+        elif path == "/api/health":
             self.respond(200, {"status": "ok", "source": "simulation"})
+        elif path.startswith("/api/workpieces/"):
+            workpiece_id = unquote(path.removeprefix("/api/workpieces/"))
+            if "/" in workpiece_id or not workpiece_id:
+                return self.respond(404, {"error": "workpiece not found"})
+            try:
+                with LOCK:
+                    genealogy = SIM.workpiece_genealogy(workpiece_id)
+                self.respond(200, genealogy)
+            except ValueError:
+                self.respond(404, {"error": "workpiece not found"})
         else:
             super().do_GET()
 
     def do_POST(self):
-        if self.path != "/api/control":
+        if urlsplit(self.path).path != "/api/control":
             return self.respond(404, {"error": "not found"})
         try:
             n = int(self.headers.get("Content-Length", "0"))
@@ -57,10 +70,14 @@ class Handler(SimpleHTTPRequestHandler):
 def main(argv: list[str] | None = None):
     parser = argparse.ArgumentParser(description="FactoryTwin synthetic factory simulator")
     parser.add_argument("--blueprint", type=Path, help="validated local JSON station graph")
+    parser.add_argument("--quality-scenario", type=Path,
+                        help="validated deterministic local JSON quality scenario")
     args = parser.parse_args(argv)
+    blueprint = FactoryBlueprint.load(args.blueprint) if args.blueprint is not None else DEFAULT_BLUEPRINT
+    quality = (QualityScenario.load(args.quality_scenario)
+               if args.quality_scenario is not None else DEFAULT_QUALITY_SCENARIO)
     global SIM
-    if args.blueprint is not None:
-        SIM = ProductionLine(blueprint=FactoryBlueprint.load(args.blueprint))
+    SIM = ProductionLine(blueprint=blueprint, quality_scenario=quality)
     httpd = ThreadingHTTPServer(("127.0.0.1", 8766), Handler)
     print("FactoryTwin (simulated factory): http://127.0.0.1:8766")
     try:
