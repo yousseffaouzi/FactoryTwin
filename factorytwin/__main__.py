@@ -7,8 +7,9 @@ from threading import Lock
 from urllib.parse import unquote, urlsplit
 
 from .blueprint import DEFAULT_BLUEPRINT, FactoryBlueprint
+from .fault_persistence import FaultPersistentProductionLine
 from .metrics import DEFAULT_METRICS_PLAN, MetricsPlan
-from .persistence import PersistenceError, PersistentProductionLine
+from .persistence import PersistenceError
 from .quality import DEFAULT_QUALITY_SCENARIO, QualityScenario
 from .sim import ProductionLine
 from .streaming import SnapshotStreamHub
@@ -41,7 +42,7 @@ class Handler(SimpleHTTPRequestHandler):
         except ValueError:
             return self.respond(400, {"error": "invalid Last-Event-ID"})
         with LOCK:
-            current = SIM.snapshot()  # read-only: streaming never advances the observation tick
+            current = SIM.snapshot()
         frames = STREAM.reconnect(last_id, current)
         cursor = last_id if last_id is not None else STREAM.latest_id
         self.send_response(200)
@@ -60,10 +61,8 @@ class Handler(SimpleHTTPRequestHandler):
                     self.wfile.flush()
                 frames = STREAM.wait_after(cursor)
                 if not frames:
-                    # Keep-alive comments are not events and do not advance the simulator.
                     self.wfile.write(b": keep-alive\n\n")
                     self.wfile.flush()
-                    # If the cursor fell behind the bounded buffer, explicitly resync.
                     with LOCK:
                         current = SIM.snapshot()
                     frames = STREAM.reconnect(cursor, current)
@@ -135,8 +134,8 @@ def main(argv: list[str] | None = None):
                     if args.metrics_plan is not None else DEFAULT_METRICS_PLAN)
     global SIM, STREAM
     if args.database is not None:
-        SIM = PersistentProductionLine.open(args.database, blueprint=requested_blueprint,
-                                            quality_scenario=requested_quality)
+        SIM = FaultPersistentProductionLine.open(args.database, blueprint=requested_blueprint,
+                                                 quality_scenario=requested_quality)
     else:
         SIM = ProductionLine(blueprint=requested_blueprint or DEFAULT_BLUEPRINT,
                              quality_scenario=requested_quality or DEFAULT_QUALITY_SCENARIO)
