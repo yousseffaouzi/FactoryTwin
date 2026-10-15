@@ -13,7 +13,7 @@ Legend: `DONE`, `IN PROGRESS`, `TODO`, `BLOCKED`, `ON HOLD`.
 | FT-005 | DONE | P0 | Formalize state transitions, interlocks and invariants | `ProductionLine.state`, `validate()`, documented transition table, 24 simulator tests and 3 loopback API regression tests (`python -m unittest discover -s tests -v`) |
 | FT-006 | DONE | P0 | Add timestamped event stream and deterministic replay | Event `seq` + `sim_time_ms`; JSON trace export/replay; `tests/fixtures/replay_scenario_v1.json`; 42 automated tests (including API regressions) |
 | FT-007 | DONE | P1 | Build configurable station graph + cycle-time model | Strict `FactoryBlueprint` validation; 1–32 single-route stations; configurable productive `cycle_ticks`; `config/assembly_line.json`; trace.v2 replay; CLI + dashboard integration; 58/58 GitHub Actions tests |
-| FT-008 | TODO | P1 | Implement workpiece genealogy and quality routes | Tests for scrap/rework tracking |
+| FT-008 | DONE | P1 | Implement workpiece genealogy and quality routes | Immutable workpiece genealogy; deterministic GOOD/SCRAP/same-station REWORK scenario semantics; conservation/interlock/backpressure + trace.v1/v2 compatibility and trace.v3 replay; read-only genealogy API; 72/72 GitHub Actions tests at `64a8667f33d63f95aedd4f9b12267c0c1162b630` ([run 38666833965](https://github.com/yousseffaouzi/FactoryTwin/actions/runs/38666833965)) |
 | FT-009 | TODO | P1 | Persist events and snapshots in SQLite | Migration and recovery tests |
 | FT-010 | TODO | P1 | Add production KPIs / OEE with honest definitions | Documented formulas and tests |
 | FT-011 | TODO | P1 | Add WebSockets or SSE streaming | Reconnect/resync tests |
