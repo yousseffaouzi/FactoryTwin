@@ -1,4 +1,4 @@
-"""Local-only FactoryTwin demo server with optional local SQLite durability."""
+"""Local-only FactoryTwin demo server with optional persistence and metrics."""
 import argparse
 import json
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -7,6 +7,7 @@ from threading import Lock
 from urllib.parse import unquote, urlsplit
 
 from .blueprint import DEFAULT_BLUEPRINT, FactoryBlueprint
+from .metrics import DEFAULT_METRICS_PLAN, MetricsPlan
 from .persistence import PersistenceError, PersistentProductionLine
 from .quality import DEFAULT_QUALITY_SCENARIO, QualityScenario
 from .sim import ProductionLine
@@ -80,10 +81,14 @@ def main(argv: list[str] | None = None):
                         help="validated deterministic local JSON quality scenario")
     parser.add_argument("--database", type=Path,
                         help="optional local SQLite file for durable simulation state")
+    parser.add_argument("--metrics-plan", type=Path,
+                        help="optional local JSON declaration enabling synthetic OEE")
     args = parser.parse_args(argv)
     requested_blueprint = FactoryBlueprint.load(args.blueprint) if args.blueprint is not None else None
     requested_quality = (QualityScenario.load(args.quality_scenario)
                          if args.quality_scenario is not None else None)
+    metrics_plan = (MetricsPlan.load(args.metrics_plan)
+                    if args.metrics_plan is not None else DEFAULT_METRICS_PLAN)
     global SIM
     if args.database is not None:
         SIM = PersistentProductionLine.open(args.database, blueprint=requested_blueprint,
@@ -91,6 +96,7 @@ def main(argv: list[str] | None = None):
     else:
         SIM = ProductionLine(blueprint=requested_blueprint or DEFAULT_BLUEPRINT,
                              quality_scenario=requested_quality or DEFAULT_QUALITY_SCENARIO)
+    SIM.metrics_plan = metrics_plan
     httpd = ThreadingHTTPServer(("127.0.0.1", 8766), Handler)
     print("FactoryTwin (simulated factory): http://127.0.0.1:8766")
     try:
