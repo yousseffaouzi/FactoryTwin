@@ -1,13 +1,7 @@
 """FactoryTwin software-only production-line simulation."""
 
-# Preserve the historical `factorytwin.sim.ProductionLine` import while keeping
-# runtime behavior in an explicit concrete class rather than mutating parent
-# classes during package import.
-from . import sim as _sim
-from .genealogy import QUALITY_TRACE_SCHEMA
-from .faults import MULTI_FAULT_TRACE_SCHEMA
-from .runtime import RuntimeProductionLine
+# The public simulator is composed inside factorytwin.sim. Importing the package
+# no longer mutates another module's ProductionLine or trace-schema attributes.
+from .sim import MULTI_FAULT_TRACE_SCHEMA, QUALITY_TRACE_SCHEMA, ProductionLine
 
-_sim.ProductionLine = RuntimeProductionLine
-_sim.QUALITY_TRACE_SCHEMA = QUALITY_TRACE_SCHEMA
-_sim.MULTI_FAULT_TRACE_SCHEMA = MULTI_FAULT_TRACE_SCHEMA
+__all__ = ["MULTI_FAULT_TRACE_SCHEMA", "ProductionLine", "QUALITY_TRACE_SCHEMA"]
