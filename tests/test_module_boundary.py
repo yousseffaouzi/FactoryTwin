@@ -1,8 +1,9 @@
 """Regression tests for the public simulator/module boundary."""
+import inspect
 import unittest
 
 import factorytwin
-from factorytwin import sim
+from factorytwin import faults, genealogy, sim
 from factorytwin.engine import ProductionLine as EngineProductionLine
 from factorytwin.genealogy import GenealogyProductionLine
 from factorytwin.runtime import RuntimeProductionLine
@@ -22,6 +23,15 @@ class ModuleBoundaryTest(unittest.TestCase):
         self.assertEqual(sim.QUALITY_TRACE_SCHEMA, "factorytwin.trace.v3")
         self.assertEqual(sim.MULTI_FAULT_TRACE_SCHEMA, "factorytwin.trace.v4")
         self.assertIs(sim.EngineProductionLine, EngineProductionLine)
+
+    def test_internal_layers_do_not_import_public_sim_facade(self):
+        self.assertNotIn("from .sim import", inspect.getsource(genealogy))
+        self.assertNotIn("from .sim import", inspect.getsource(faults))
+        self.assertIs(genealogy.LegacyProductionLine, EngineProductionLine)
+        self.assertEqual(faults.LineState.__module__, "factorytwin.engine")
+        sim_source = inspect.getsource(sim)
+        self.assertEqual(sim_source.count("ProductionLine ="), 1)
+        self.assertIn("ProductionLine = RuntimeProductionLine", sim_source)
 
 
 if __name__ == "__main__":
