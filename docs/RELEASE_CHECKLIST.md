@@ -4,7 +4,7 @@ This checklist audits the **software-only FactoryTwin simulator**. Passing it do
 
 ## Current checkpoint
 
-The approved software release is `0.1.0` / `v0.1.0`. It remains pre-alpha research/demo software. The project-owner approvals recorded below authorize this software release only; they do not authorize package-registry publication or FT-016 physical integration work.
+The approved software release is `0.1.0` / `v0.1.0`. The active development line is `0.2.0.dev0`, which is not an approved release and must not be represented as one. The v0.1.0 approvals recorded below apply only to that released checkpoint; they do not authorize a future v0.2.0 release, package-registry publication, or FT-016 physical integration work.
 
 ## Automated gates
 
@@ -25,12 +25,12 @@ The normal GitHub Actions matrix must keep all of the following green:
 - [x] `docs/VALIDATION.md` defines the bounded software-correctness validation scope.
 - [x] `docs/PERFORMANCE.md` defines the synthetic benchmark interpretation boundary.
 - [x] `docs/RELEASES.md` defines versioning and approval policy.
-- [x] `CHANGELOG.md` records v0.1.0 release changes.
+- [x] `CHANGELOG.md` records v0.1.0 release history and the post-release development line.
 - [x] `README.md` states pre-alpha, loopback-only, synthetic-data and non-industrial-control boundaries.
 - [x] Runtime dependency metadata remains empty; the simulator/server runtime stays standard-library oriented.
 - [x] FT-016 physical PLC/SCADA/robotics/plant integration remains `ON HOLD` pending a separate safety review.
 
-## Manual release-decision gates
+## Historical v0.1.0 manual approvals
 
 - [x] Explicit project-owner approval to promote or merge into `main`: **approved 2026-10-20**.
 - [x] Explicit approval of non-development version `0.1.0`: **approved 2026-10-20**.
@@ -38,8 +38,8 @@ The normal GitHub Actions matrix must keep all of the following green:
 - [ ] Package-registry publication: **not part of v0.1.0; separate approval required**.
 - [ ] Separate safety/security review before any FT-016 physical integration work.
 
-Future releases, package publication, or physical integration work require their own explicit approvals. FactoryTwin v0.1.0 must not be represented as a production-ready industrial digital twin.
+Future releases, package publication, or physical integration work require their own explicit approvals. FactoryTwin v0.1.0 and the `0.2.0.dev0` development line must not be represented as production-ready industrial digital twins.
 
-## Evidence to record for v0.1.0
+## Evidence to record for future release candidates
 
-Record the release commit SHA, both supported Python job results, exact test count, wheel filename, installed-wheel smoke result, changelog entry, version/tag decision, and confirmation that scope/safety wording still matches executable capabilities.
+Record the candidate commit SHA, both supported Python job results, exact test count, wheel filename, installed-wheel smoke result, changelog entry, version/tag decision, and confirmation that scope/safety wording still matches executable capabilities.

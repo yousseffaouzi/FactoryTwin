@@ -10,6 +10,12 @@ The current approved software release is `0.1.0` (`v0.1.0` when tagged).
 
 On 2026-10-20 the project owner explicitly authorized promotion of the validated software line to `main`, use of the non-development version `0.1.0`, and creation of the `v0.1.0` Git tag / GitHub release. Package-registry publication was not authorized as part of this release.
 
+## Current development line
+
+The active development branch has reopened on `0.2.0.dev0`. This is a development version only. It is not an approved release, is not tagged, is not a package-registry publication, and does not change the approved v0.1.0 release on `main` / `v0.1.0`.
+
+Any future non-development `0.2.0` release, promotion to `main`, Git tag, GitHub release, or package publication requires its own explicit project-owner approval and fresh release-readiness evidence.
+
 ## Version source
 
 `factorytwin/_version.py` is the single source of truth. `pyproject.toml` reads that value dynamically when building distributions. The package root does not export `__version__`, so the FT-021 public API contract is unchanged.
@@ -42,4 +48,4 @@ Before an approved release:
 8. FT-016 physical integration work must remain separated behind its safety-review gate.
 9. Promotion to `main`, tagging, GitHub release creation, or package publication requires explicit project-owner approval for that action.
 
-No PyPI publication is approved or automated for v0.1.0.
+No PyPI publication is approved or automated for v0.1.0, and none is approved for the `0.2.0.dev0` development line.

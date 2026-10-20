@@ -30,7 +30,7 @@ class PackagingContractTest(unittest.TestCase):
         self.assertEqual(project["dynamic"], ["version"])
         dynamic = self.config["tool"]["setuptools"]["dynamic"]
         self.assertEqual(dynamic["version"]["attr"], "factorytwin._version.__version__")
-        self.assertEqual(__version__, "0.1.0")
+        self.assertEqual(__version__, "0.2.0.dev0")
 
     def test_dashboard_is_served_from_package_data(self):
         self.assertEqual(app.ROOT, PACKAGED_WEB.parent)

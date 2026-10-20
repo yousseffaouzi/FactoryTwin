@@ -39,17 +39,22 @@ class ReleaseReadinessTest(unittest.TestCase):
         self.assertIn("| FT-016 | ON HOLD |", todo)
         self.assertIn("Tracker does not indicate a production-ready industrial digital twin.", todo)
 
-    def test_v010_release_version_and_actions_are_explicitly_authorized(self):
-        self.assertEqual(__version__, "0.1.0")
+    def test_v010_release_history_and_current_development_line_are_explicit(self):
+        self.assertEqual(__version__, "0.2.0.dev0")
         releases = text("docs/RELEASES.md")
         checklist = text("docs/RELEASE_CHECKLIST.md")
         changelog = text("CHANGELOG.md")
-        self.assertIn("requires explicit project-owner approval", releases)
-        self.assertIn("No PyPI publication is approved or automated for v0.1.0.", releases)
+        self.assertIn("current approved software release is `0.1.0`", releases)
+        self.assertIn("active development branch has reopened on `0.2.0.dev0`", releases)
+        self.assertIn("requires its own explicit project-owner approval", releases)
+        self.assertIn("No PyPI publication is approved or automated for v0.1.0", releases)
+        self.assertIn("active development line is `0.2.0.dev0`", checklist)
         self.assertIn("Explicit project-owner approval to promote or merge into `main`: **approved 2026-10-20**.", checklist)
         self.assertIn("Explicit approval of non-development version `0.1.0`: **approved 2026-10-20**.", checklist)
         self.assertIn("Explicit approval to create Git tag / GitHub release `v0.1.0`: **approved 2026-10-20**.", checklist)
         self.assertIn("FT-016 physical PLC/SCADA/robotics/plant integration remains `ON HOLD`", checklist)
+        self.assertIn("## Unreleased", changelog)
+        self.assertIn("`0.2.0.dev0`", changelog)
         self.assertIn("## 0.1.0 - 2026-10-20", changelog)
 
     def test_packaging_and_ci_release_gates_match_documented_support(self):

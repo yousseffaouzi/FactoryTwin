@@ -4,7 +4,11 @@ FactoryTwin is pre-alpha software. This file records software-release readiness 
 
 ## Unreleased
 
-No changes have been recorded after v0.1.0 yet.
+### Changed
+- Development resumed after v0.1.0 on version line `0.2.0.dev0`; this development version is not an approved release, tag, or package-registry publication.
+- Release-history guardrails now distinguish the immutable v0.1.0 software release from subsequent development commits.
+
+No simulator behavior or physical-integration scope changes are introduced by this checkpoint.
 
 ## 0.1.0 - 2026-10-20
 
