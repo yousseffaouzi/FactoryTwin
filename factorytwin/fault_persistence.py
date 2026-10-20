@@ -6,7 +6,7 @@ from pathlib import Path
 import sqlite3
 
 from .blueprint import DEFAULT_BLUEPRINT, FactoryBlueprint
-from .engine import MAX_REPLAY_OPERATIONS
+from .engine import MAX_REPLAY_OPERATIONS, TICK_DURATION_MS
 from .faults import MULTI_FAULT_TRACE_SCHEMA
 from .persistence import PersistenceError, PersistentProductionLine, SQLiteStore, _parse_json
 from .quality import DEFAULT_QUALITY_SCENARIO, QualityScenario
@@ -66,7 +66,7 @@ class FaultSQLiteStore(SQLiteStore):
                     (expected_events > 0 and
                      (event_count != expected_events or min_seq != 1 or max_seq != expected_events))):
                 raise PersistenceError("persisted event journal is inconsistent")
-            trace = {"schema": MULTI_FAULT_TRACE_SCHEMA, "tick_duration_ms": 1000,
+            trace = {"schema": MULTI_FAULT_TRACE_SCHEMA, "tick_duration_ms": TICK_DURATION_MS,
                      "blueprint": session["blueprint"],
                      "quality_scenario": session["quality_scenario"],
                      "operations": operations, "final_state": final_state}
