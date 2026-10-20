@@ -9,14 +9,10 @@ import sqlite3
 import uuid
 
 from .blueprint import DEFAULT_BLUEPRINT, FactoryBlueprint
+from .engine import CUSTOM_TRACE_SCHEMA, MAX_REPLAY_OPERATIONS, TRACE_SCHEMA
+from .genealogy import QUALITY_TRACE_SCHEMA
 from .quality import DEFAULT_QUALITY_SCENARIO, QualityScenario
-from .sim import (
-    CUSTOM_TRACE_SCHEMA,
-    MAX_REPLAY_OPERATIONS,
-    QUALITY_TRACE_SCHEMA,
-    TRACE_SCHEMA,
-    ProductionLine,
-)
+from .runtime import RuntimeProductionLine as ProductionLine
 
 SCHEMA_VERSION = 2
 MAX_PERSISTENCE_READ = 1_000
