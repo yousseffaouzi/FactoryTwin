@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "factorytwin"
+version = "0.1.0.dev0"
+description = "Software-only production-line digital twin and smart-factory simulator prototype"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+  { name = "Youssef Faouzi" },
+]
+keywords = ["simulation", "digital-twin", "manufacturing", "smart-factory"]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering",
+]
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/yousseffaouzi/FactoryTwin"
+
+[project.scripts]
+factorytwin = "factorytwin.__main__:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["factorytwin*"]
+
+[tool.setuptools.package-data]
+factorytwin = ["web/index.html"]

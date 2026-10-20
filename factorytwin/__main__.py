@@ -14,7 +14,7 @@ from .quality import DEFAULT_QUALITY_SCENARIO, QualityScenario
 from .sim import ProductionLine
 from .streaming import SnapshotStreamHub
 
-ROOT = Path(__file__).resolve().parents[1] / "web"
+ROOT = Path(__file__).resolve().parent / "web"
 SIM = ProductionLine()
 LOCK = Lock()
 STREAM = SnapshotStreamHub()

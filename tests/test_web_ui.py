@@ -4,7 +4,7 @@ from pathlib import Path
 import re
 import unittest
 
-WEB = Path(__file__).resolve().parents[1] / "web" / "index.html"
+WEB = Path(__file__).resolve().parents[1] / "factorytwin" / "web" / "index.html"
 
 
 class InventoryParser(HTMLParser):
