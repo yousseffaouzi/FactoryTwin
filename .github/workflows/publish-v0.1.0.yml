@@ -1,0 +1,68 @@
+name: Publish FactoryTwin v0.1.0
+
+on:
+  push:
+    branches:
+      - feat/simulation-engine-foundation
+    paths:
+      - .github/workflows/publish-v0.1.0.yml
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create v0.1.0 tag and GitHub pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SHA: 87b351f128dde330a02a050239b7669a173e2e9e
+          TAG: v0.1.0
+        run: |
+          set -euo pipefail
+
+          existing_tag="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${TAG}" --jq '.object.sha' 2>/dev/null || true)"
+          if [ -n "${existing_tag}" ] && [ "${existing_tag}" != "${RELEASE_SHA}" ]; then
+            echo "Refusing to move existing ${TAG} from ${existing_tag} to ${RELEASE_SHA}"
+            exit 1
+          fi
+          if [ -z "${existing_tag}" ]; then
+            gh api "repos/${GITHUB_REPOSITORY}/git/refs" \
+              --method POST \
+              -f ref="refs/tags/${TAG}" \
+              -f sha="${RELEASE_SHA}"
+          fi
+
+          if gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${TAG}" >/dev/null 2>&1; then
+            echo "GitHub release ${TAG} already exists"
+            exit 0
+          fi
+
+          cat > /tmp/release-body.md <<'EOF'
+          FactoryTwin v0.1.0 is the first approved software-only pre-alpha release.
+
+          Validation:
+          - Release SHA: `87b351f128dde330a02a050239b7669a173e2e9e`
+          - 162/162 tests on Python 3.11 and Python 3.12
+          - Release-candidate CI: run 39495914640
+          - Active-branch CI: run 39496089751
+          - Main CI: run 39496210442
+          - Wheel: `factorytwin-0.1.0-py3-none-any.whl`
+          - Isolated installed-wheel smoke passed
+
+          Scope boundary:
+          - Software-only synthetic simulator/digital-twin prototype
+          - Not a PLC, SCADA system, wire-compatible OPC UA server, hardware controller, safety system, or validated physical digital twin
+          - No PyPI/package-registry publication in this release
+          - FT-016 physical integration remains ON HOLD
+          EOF
+
+          gh api "repos/${GITHUB_REPOSITORY}/releases" \
+            --method POST \
+            -f tag_name="${TAG}" \
+            -f target_commitish="${RELEASE_SHA}" \
+            -f name="FactoryTwin v0.1.0" \
+            -f body="$(cat /tmp/release-body.md)" \
+            -F draft=false \
+            -F prerelease=true
