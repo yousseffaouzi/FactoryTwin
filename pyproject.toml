@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "factorytwin"
-version = "0.1.0.dev0"
+dynamic = ["version"]
 description = "Software-only production-line digital twin and smart-factory simulator prototype"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -28,6 +28,7 @@ dependencies = []
 
 [project.urls]
 Repository = "https://github.com/yousseffaouzi/FactoryTwin"
+Issues = "https://github.com/yousseffaouzi/FactoryTwin/issues"
 
 [project.scripts]
 factorytwin = "factorytwin.__main__:main"
@@ -40,3 +41,6 @@ include = ["factorytwin*"]
 
 [tool.setuptools.package-data]
 factorytwin = ["web/index.html"]
+
+[tool.setuptools.dynamic]
+version = { attr = "factorytwin._version.__version__" }
