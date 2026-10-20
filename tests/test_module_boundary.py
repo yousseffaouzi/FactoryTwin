@@ -91,6 +91,14 @@ class ModuleBoundaryTest(unittest.TestCase):
         self.assertIs(persistence.ProductionLine, RuntimeProductionLine)
         self.assertIs(fault_persistence.ProductionLine, RuntimeProductionLine)
 
+    def test_fault_persistence_runtime_bypass_is_explicit(self):
+        source = inspect.getsource(fault_persistence.FaultPersistentProductionLine)
+        self.assertNotIn("super(PersistentProductionLine, self)", source)
+        self.assertIn("RuntimeProductionLine.step(self)", source)
+        self.assertIn("RuntimeProductionLine.control(self, action, station)", source)
+        self.assertIs(fault_persistence.RuntimeProductionLine, RuntimeProductionLine)
+        self.assertIs(fault_persistence.ProductionLine, RuntimeProductionLine)
+
 
 if __name__ == "__main__":
     unittest.main()
