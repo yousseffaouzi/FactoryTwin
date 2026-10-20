@@ -6,10 +6,11 @@ from pathlib import Path
 import sqlite3
 
 from .blueprint import DEFAULT_BLUEPRINT, FactoryBlueprint
+from .engine import MAX_REPLAY_OPERATIONS
 from .faults import MULTI_FAULT_TRACE_SCHEMA
 from .persistence import PersistenceError, PersistentProductionLine, SQLiteStore, _parse_json
 from .quality import DEFAULT_QUALITY_SCENARIO, QualityScenario
-from .sim import MAX_REPLAY_OPERATIONS, ProductionLine
+from .runtime import RuntimeProductionLine as ProductionLine
 
 
 class FaultSQLiteStore(SQLiteStore):
