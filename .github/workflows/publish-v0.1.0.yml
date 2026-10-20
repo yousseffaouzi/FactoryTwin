@@ -22,7 +22,10 @@ jobs:
         run: |
           set -euo pipefail
 
-          existing_tag="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${TAG}" --jq '.object.sha' 2>/dev/null || true)"
+          existing_tag=""
+          if tag_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${TAG}" --jq '.object.sha' 2>/dev/null)"; then
+            existing_tag="${tag_sha}"
+          fi
           if [ -n "${existing_tag}" ] && [ "${existing_tag}" != "${RELEASE_SHA}" ]; then
             echo "Refusing to move existing ${TAG} from ${existing_tag} to ${RELEASE_SHA}"
             exit 1
