@@ -1,4 +1,4 @@
-"""FT-012 static dashboard accessibility and fallback contract tests."""
+"""FT-012/FT-027 static dashboard accessibility and UX contract tests."""
 from html.parser import HTMLParser
 from pathlib import Path
 import re
@@ -84,6 +84,31 @@ class DashboardContractTest(unittest.TestCase):
         self.assertIn('aria-valuenow="${progress}"', self.html)
         self.assertIn("Material entry", self.html)
         self.assertIn("Finished output", self.html)
+
+    def test_genealogy_inspector_is_labeled_read_only_and_keyboard_accessible(self):
+        for element_id in ("genealogyLookup", "workpieceId", "workpieceDetail"):
+            self.assertIn(element_id, self.parser.ids)
+        self.assertIn("workpieceId", self.parser.labels_for)
+        self.assertIn('role="status" aria-live="polite"', self.html)
+        self.assertIn("fetch('/api/workpieces/'+encodeURIComponent(id),{cache:'no-store'})", self.html)
+        self.assertIn('type="button" class="genealogy-link"', self.html)
+        self.assertIn('onclick="inspectKnownWorkpiece(this.dataset.workpiece)"', self.html)
+        lookup = self.html.split("async function inspectWorkpiece", 1)[1].split(
+            "function inspectKnownWorkpiece", 1
+        )[0]
+        self.assertNotIn("method:'POST'", lookup)
+        self.assertNotIn("/api/snapshot", lookup)
+
+    def test_genealogy_inspector_escapes_server_derived_fields(self):
+        for expression in (
+            "esc(d.id)",
+            "esc(d.status)",
+            "esc(d.created_tick)",
+            "esc(v.station)",
+            "esc(v.attempt)",
+            "esc(v.outcome||'pending')",
+        ):
+            self.assertIn(expression, self.html)
 
     def test_no_external_frontend_resources_or_3d_runtime(self):
         self.assertEqual(self.parser.external, [])

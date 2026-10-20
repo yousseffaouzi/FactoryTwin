@@ -72,6 +72,8 @@ Read a generated workpiece record without advancing simulation time:
 curl http://127.0.0.1:8766/api/workpieces/WP-0001
 ```
 
+The browser dashboard exposes the same read-only genealogy through the **Workpiece inspector**. Select a recent workpiece ID or type an ID such as `WP-0001`, then choose **Inspect**. The inspector shows station attempts, deterministic outcomes, entry/exit ticks and rework count without calling `/api/snapshot` or changing simulator state.
+
 ## 7. Persistence, metrics and streaming
 
 Optional SQLite mode, production metrics/OEE inputs, and the SSE endpoint are documented in:
@@ -84,7 +86,7 @@ The SSE stream is read-only transport. Snapshot polling remains a compatibility 
 
 ## 8. 2D dashboard
 
-The browser renders the current station chain as an accessible 2D floor. It uses labels and text states in addition to visual styling, supports reduced-motion preferences, and requires no frontend build system or third-party CDN.
+The browser renders the current station chain as an accessible 2D floor. It uses labels and text states in addition to visual styling, supports reduced-motion preferences, includes keyboard-accessible read-only genealogy inspection, and requires no frontend build system or third-party CDN.
 
 ## 9. OPC-UA-style simulator boundary
 
