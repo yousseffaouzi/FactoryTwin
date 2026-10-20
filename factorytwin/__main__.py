@@ -178,7 +178,11 @@ def main(argv: list[str] | None = None):
                         help="optional local SQLite file for durable simulation state")
     parser.add_argument("--metrics-plan", type=Path,
                         help="optional local JSON declaration enabling synthetic OEE")
+    parser.add_argument("--port", type=int, default=8766,
+                        help="loopback HTTP port (default: 8766; use 0 for an ephemeral test port)")
     args = parser.parse_args(argv)
+    if not 0 <= args.port <= 65535:
+        parser.error("--port must be between 0 and 65535")
     requested_blueprint = FactoryBlueprint.load(args.blueprint) if args.blueprint is not None else None
     requested_quality = (QualityScenario.load(args.quality_scenario)
                          if args.quality_scenario is not None else None)
@@ -193,8 +197,9 @@ def main(argv: list[str] | None = None):
                              quality_scenario=requested_quality or DEFAULT_QUALITY_SCENARIO)
     SIM.metrics_plan = metrics_plan
     STREAM = SnapshotStreamHub()
-    httpd = ThreadingHTTPServer(("127.0.0.1", 8766), Handler)
-    print("FactoryTwin (simulated factory): http://127.0.0.1:8766")
+    httpd = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
+    actual_port = httpd.server_address[1]
+    print(f"FactoryTwin (simulated factory): http://127.0.0.1:{actual_port}", flush=True)
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
