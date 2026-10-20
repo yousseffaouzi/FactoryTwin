@@ -6,8 +6,7 @@ from dataclasses import dataclass, field
 import json
 
 from .blueprint import DEFAULT_BLUEPRINT, FactoryBlueprint
-from .quality import DEFAULT_QUALITY_SCENARIO, QUALITY_OUTCOMES, QualityScenario
-from .sim import (
+from .engine import (
     CUSTOM_TRACE_SCHEMA,
     MAX_REPLAY_OPERATIONS,
     TICK_DURATION_MS,
@@ -15,6 +14,7 @@ from .sim import (
     LineState,
     ProductionLine as LegacyProductionLine,
 )
+from .quality import DEFAULT_QUALITY_SCENARIO, QUALITY_OUTCOMES, QualityScenario
 
 QUALITY_TRACE_SCHEMA = "factorytwin.trace.v3"
 
