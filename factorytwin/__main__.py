@@ -15,6 +15,14 @@ from .sim import ProductionLine
 from .streaming import SnapshotStreamHub
 
 ROOT = Path(__file__).resolve().parent / "web"
+MAX_CONTROL_BODY_BYTES = 4096
+SECURITY_HEADERS = (
+    ("X-Content-Type-Options", "nosniff"),
+    ("Referrer-Policy", "no-referrer"),
+    ("X-Frame-Options", "DENY"),
+    ("Cross-Origin-Resource-Policy", "same-origin"),
+    ("Content-Security-Policy", "base-uri 'none'; frame-ancestors 'none'; object-src 'none'"),
+)
 SIM = ProductionLine()
 LOCK = Lock()
 STREAM = SnapshotStreamHub()
@@ -24,6 +32,11 @@ class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(ROOT), **kwargs)
 
+    def end_headers(self):
+        for name, value in SECURITY_HEADERS:
+            self.send_header(name, value)
+        super().end_headers()
+
     def respond(self, status: int, obj: dict):
         payload = json.dumps(obj).encode("utf-8")
         self.send_response(status)
@@ -32,6 +45,48 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_header("Content-Length", str(len(payload)))
         self.end_headers()
         self.wfile.write(payload)
+
+    def _read_control_json(self):
+        if self.headers.get("Transfer-Encoding") is not None:
+            self.respond(400, {"error": "transfer encoding not supported"})
+            return None
+
+        content_type = self.headers.get("Content-Type")
+        media_type = "" if content_type is None else content_type.partition(";")[0].strip().lower()
+        if media_type != "application/json":
+            self.respond(415, {"error": "application/json required"})
+            return None
+
+        lengths = self.headers.get_all("Content-Length", [])
+        if not lengths:
+            self.respond(411, {"error": "Content-Length required"})
+            return None
+        if len(lengths) != 1:
+            self.respond(400, {"error": "invalid request size"})
+            return None
+
+        raw_length = lengths[0]
+        if not raw_length.isascii() or not raw_length.isdigit():
+            self.respond(400, {"error": "invalid request size"})
+            return None
+        n = int(raw_length)
+        if not 0 < n <= MAX_CONTROL_BODY_BYTES:
+            self.respond(400, {"error": "invalid request size"})
+            return None
+
+        raw = self.rfile.read(n)
+        if len(raw) != n:
+            self.respond(400, {"error": "incomplete request body"})
+            return None
+        try:
+            data = json.loads(raw)
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            self.respond(400, {"error": "invalid JSON"})
+            return None
+        if not isinstance(data, dict):
+            self.respond(400, {"error": "JSON object required"})
+            return None
+        return data
 
     def _stream(self):
         raw_last_id = self.headers.get("Last-Event-ID")
@@ -99,13 +154,10 @@ class Handler(SimpleHTTPRequestHandler):
     def do_POST(self):
         if urlsplit(self.path).path != "/api/control":
             return self.respond(404, {"error": "not found"})
+        data = self._read_control_json()
+        if data is None:
+            return
         try:
-            n = int(self.headers.get("Content-Length", "0"))
-            if not 0 < n <= 4096:
-                return self.respond(400, {"error": "invalid request size"})
-            data = json.loads(self.rfile.read(n))
-            if not isinstance(data, dict):
-                return self.respond(400, {"error": "JSON object required"})
             with LOCK:
                 SIM.control(data.get("action", ""), data.get("station"))
                 state = SIM.snapshot()
@@ -113,7 +165,7 @@ class Handler(SimpleHTTPRequestHandler):
             self.respond(200, state)
         except PersistenceError as exc:
             self.respond(503, {"error": str(exc)})
-        except (ValueError, TypeError, json.JSONDecodeError) as exc:
+        except (ValueError, TypeError) as exc:
             self.respond(400, {"error": str(exc)})
 
 

@@ -4,11 +4,16 @@ FactoryTwin is pre-alpha software. This file records software-release readiness 
 
 ## Unreleased
 
+### Added
+- Loopback HTTP regression coverage for media type, request framing, malformed JSON and passive browser response headers.
+
 ### Changed
 - Development resumed after v0.1.0 on version line `0.2.0.dev0`; this development version is not an approved release, tag, or package-registry publication.
-- Release-history guardrails now distinguish the immutable v0.1.0 software release from subsequent development commits.
+- Release-history guardrails distinguish the immutable v0.1.0 software release from subsequent development commits.
+- `POST /api/control` now requires bounded `application/json` requests with a single positive `Content-Length` and rejects transfer-encoded control bodies before simulator mutation.
+- Local HTTP responses include passive browser hardening headers while the server remains unauthenticated and loopback-only.
 
-No simulator behavior or physical-integration scope changes are introduced by this checkpoint.
+No physical-integration scope is introduced by these changes.
 
 ## 0.1.0 - 2026-10-20
 
