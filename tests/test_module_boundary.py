@@ -9,6 +9,32 @@ from factorytwin.genealogy import GenealogyProductionLine
 from factorytwin.runtime import RuntimeProductionLine
 
 
+PACKAGE_PUBLIC_API = [
+    "MULTI_FAULT_TRACE_SCHEMA",
+    "ProductionLine",
+    "QUALITY_TRACE_SCHEMA",
+]
+
+SIM_PUBLIC_API = [
+    "CUSTOM_TRACE_SCHEMA",
+    "EngineProductionLine",
+    "LineState",
+    "MAX_REPLAY_OPERATIONS",
+    "MULTI_FAULT_TRACE_SCHEMA",
+    "ProductionLine",
+    "QUALITY_TRACE_SCHEMA",
+    "STATIONS",
+    "TICK_DURATION_MS",
+    "TRACE_SCHEMA",
+]
+
+
+def _star_import_names(statement):
+    namespace = {}
+    exec(statement, namespace)
+    return {name for name in namespace if name != "__builtins__"}
+
+
 class ModuleBoundaryTest(unittest.TestCase):
     def test_public_sim_facade_exposes_runtime_without_package_mutation(self):
         self.assertIs(sim.ProductionLine, RuntimeProductionLine)
@@ -22,6 +48,27 @@ class ModuleBoundaryTest(unittest.TestCase):
     def test_public_trace_symbols_are_available_without_runtime_rebinding(self):
         self.assertEqual(sim.QUALITY_TRACE_SCHEMA, "factorytwin.trace.v3")
         self.assertEqual(sim.MULTI_FAULT_TRACE_SCHEMA, "factorytwin.trace.v4")
+        self.assertIs(sim.EngineProductionLine, EngineProductionLine)
+
+    def test_package_public_api_is_explicit_and_resolvable(self):
+        self.assertEqual(factorytwin.__all__, PACKAGE_PUBLIC_API)
+        for name in PACKAGE_PUBLIC_API:
+            self.assertTrue(hasattr(factorytwin, name), name)
+        self.assertEqual(
+            _star_import_names("from factorytwin import *"),
+            set(PACKAGE_PUBLIC_API),
+        )
+        self.assertNotIn("EngineProductionLine", factorytwin.__all__)
+
+    def test_sim_public_api_is_explicit_and_resolvable(self):
+        self.assertEqual(sim.__all__, SIM_PUBLIC_API)
+        for name in SIM_PUBLIC_API:
+            self.assertTrue(hasattr(sim, name), name)
+        self.assertEqual(
+            _star_import_names("from factorytwin.sim import *"),
+            set(SIM_PUBLIC_API),
+        )
+        self.assertIs(sim.ProductionLine, factorytwin.ProductionLine)
         self.assertIs(sim.EngineProductionLine, EngineProductionLine)
 
     def test_internal_layers_do_not_import_public_sim_facade(self):

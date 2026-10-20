@@ -38,6 +38,16 @@ python -m unittest discover -s tests -v
 
 The HTTP server binds to loopback only. `GET /api/snapshot` intentionally advances one observation tick. Paused/faulted lines still advance observation time but do no productive work.
 
+## Python API compatibility
+
+For ordinary simulator code, prefer the package-root import:
+
+```python
+from factorytwin import ProductionLine
+```
+
+The exact supported package-root exports and the historical `factorytwin.sim` compatibility facade are documented in [`docs/PUBLIC_API.md`](docs/PUBLIC_API.md) and locked by regression tests.
+
 ## Useful demo paths
 
 - Browser dashboard: `http://127.0.0.1:8766/`
@@ -85,7 +95,9 @@ Optional boundary: in-process OPC-UA-style simulator mock
 
 Core modules include:
 
-- `factorytwin/sim.py` — legacy deterministic engine and compatibility contracts.
+- `factorytwin/engine.py` — deterministic base engine core.
+- `factorytwin/sim.py` — stable public simulator compatibility facade.
+- `factorytwin/runtime.py` — explicit composed runtime used by the public `ProductionLine`.
 - `factorytwin/blueprint.py` — strict local JSON linear-route validation.
 - `factorytwin/genealogy.py` / `quality.py` — genealogy and deterministic quality semantics.
 - `factorytwin/persistence.py` — optional local SQLite journals, migrations, and recovery.
@@ -96,7 +108,7 @@ Core modules include:
 - `web/index.html` — zero-build accessible 2D dashboard.
 - `TODO.md` — source task tracker.
 
-For the design narrative and boundaries, see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and [`docs/ARCHITECTURE_BLOG.md`](docs/ARCHITECTURE_BLOG.md).
+For the design narrative and boundaries, see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`docs/ARCHITECTURE_BLOG.md`](docs/ARCHITECTURE_BLOG.md), and [`docs/PUBLIC_API.md`](docs/PUBLIC_API.md).
 
 ## Quality and rework boundary
 
