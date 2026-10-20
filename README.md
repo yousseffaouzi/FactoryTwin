@@ -2,7 +2,7 @@
 
 **A software-only industrial production-line digital twin / smart-factory simulation prototype.**
 
-> **Status:** pre-alpha research/demo software. All equipment, signals, workpieces, quality outcomes and faults are synthetic. **FactoryTwin is not a PLC, SCADA system, wire-compatible OPC UA server, hardware controller, safety system, or validated physical digital twin.**
+> **Status:** v0.1.0 pre-alpha research/demo software release. All equipment, signals, workpieces, quality outcomes and faults are synthetic. **FactoryTwin is not a PLC, SCADA system, wire-compatible OPC UA server, hardware controller, safety system, or validated physical digital twin.**
 
 ![FactoryTwin synthetic demo](docs/assets/factorytwin-demo.gif)
 
@@ -34,9 +34,9 @@ python -m factorytwin --blueprint config/assembly_line.json
 
 The HTTP server binds to `127.0.0.1` only.
 
-## Install from a trusted checkout
+## Install v0.1.0 from a trusted source checkout
 
-FactoryTwin is not currently claimed as a published PyPI package. To exercise the same install path used by CI, install from a trusted checkout:
+FactoryTwin v0.1.0 is an approved repository release. No PyPI publication is claimed for this release. To exercise the same install path used by CI, install from a trusted checkout of the v0.1.0 source:
 
 ```bash
 python -m pip install --no-deps .
@@ -140,14 +140,14 @@ The optional OPC-UA-style adapter is an in-process software mock intended to exe
 
 ## Validation and release boundary
 
-Software correctness validation, synthetic performance reporting, version policy, and the release-decision checklist are documented separately:
+Software correctness validation, synthetic performance reporting, version policy, and the release checklist are documented separately:
 
 - [`docs/VALIDATION.md`](docs/VALIDATION.md) — bounded deterministic soak/recovery validation.
 - [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md) — environment-dependent software benchmark reporting; no real-time threshold.
 - [`docs/RELEASES.md`](docs/RELEASES.md) — versioning and approval policy.
-- [`docs/RELEASE_CHECKLIST.md`](docs/RELEASE_CHECKLIST.md) — automated gates versus manual release approvals.
+- [`docs/RELEASE_CHECKLIST.md`](docs/RELEASE_CHECKLIST.md) — automated gates and recorded v0.1.0 approval decisions.
 
-A green development branch is not permission to merge `main`, create a release/tag, publish a package, or begin physical integration work.
+The v0.1.0 repository release was explicitly approved on 2026-10-20. Future main promotions, tags/releases, package-registry publication, and physical integration work each require their own explicit approval. No package-registry publication is part of v0.1.0.
 
 ## Safety
 

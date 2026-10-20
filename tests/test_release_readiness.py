@@ -39,15 +39,18 @@ class ReleaseReadinessTest(unittest.TestCase):
         self.assertIn("| FT-016 | ON HOLD |", todo)
         self.assertIn("Tracker does not indicate a production-ready industrial digital twin.", todo)
 
-    def test_development_version_and_release_actions_stay_approval_gated(self):
-        self.assertRegex(__version__, r"^\d+\.\d+\.\d+\.dev\d+$")
+    def test_v010_release_version_and_actions_are_explicitly_authorized(self):
+        self.assertEqual(__version__, "0.1.0")
         releases = text("docs/RELEASES.md")
         checklist = text("docs/RELEASE_CHECKLIST.md")
+        changelog = text("CHANGELOG.md")
         self.assertIn("requires explicit project-owner approval", releases)
-        self.assertIn("No PyPI publication is currently claimed or automated.", releases)
-        self.assertIn("Explicit project-owner approval to promote or merge into `main`.", checklist)
-        self.assertIn("Explicit approval to create a Git tag or GitHub release.", checklist)
+        self.assertIn("No PyPI publication is approved or automated for v0.1.0.", releases)
+        self.assertIn("Explicit project-owner approval to promote or merge into `main`: **approved 2026-10-20**.", checklist)
+        self.assertIn("Explicit approval of non-development version `0.1.0`: **approved 2026-10-20**.", checklist)
+        self.assertIn("Explicit approval to create Git tag / GitHub release `v0.1.0`: **approved 2026-10-20**.", checklist)
         self.assertIn("FT-016 physical PLC/SCADA/robotics/plant integration remains `ON HOLD`", checklist)
+        self.assertIn("## 0.1.0 - 2026-10-20", changelog)
 
     def test_packaging_and_ci_release_gates_match_documented_support(self):
         config = tomllib.loads(text("pyproject.toml"))

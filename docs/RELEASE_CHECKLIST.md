@@ -4,7 +4,7 @@ This checklist audits the **software-only FactoryTwin simulator**. Passing it do
 
 ## Current checkpoint
 
-The development line remains `0.1.0.dev0` pre-alpha software. A green checklist means the development branch is technically prepared for a separate release decision; it is **not** approval to merge `main`, create a release tag, publish a package, or start physical integration work.
+The approved software release is `0.1.0` / `v0.1.0`. It remains pre-alpha research/demo software. The project-owner approvals recorded below authorize this software release only; they do not authorize package-registry publication or FT-016 physical integration work.
 
 ## Automated gates
 
@@ -25,23 +25,21 @@ The normal GitHub Actions matrix must keep all of the following green:
 - [x] `docs/VALIDATION.md` defines the bounded software-correctness validation scope.
 - [x] `docs/PERFORMANCE.md` defines the synthetic benchmark interpretation boundary.
 - [x] `docs/RELEASES.md` defines versioning and approval policy.
-- [x] `CHANGELOG.md` records unreleased software changes.
+- [x] `CHANGELOG.md` records v0.1.0 release changes.
 - [x] `README.md` states pre-alpha, loopback-only, synthetic-data and non-industrial-control boundaries.
 - [x] Runtime dependency metadata remains empty; the simulator/server runtime stays standard-library oriented.
 - [x] FT-016 physical PLC/SCADA/robotics/plant integration remains `ON HOLD` pending a separate safety review.
 
 ## Manual release-decision gates
 
-These are deliberately **not** performed by this checklist:
-
-- [ ] Explicit project-owner approval to promote or merge into `main`.
-- [ ] Explicit approval of a non-development version number.
-- [ ] Explicit approval to create a Git tag or GitHub release.
-- [ ] Explicit approval of any package-registry publication.
+- [x] Explicit project-owner approval to promote or merge into `main`: **approved 2026-10-20**.
+- [x] Explicit approval of non-development version `0.1.0`: **approved 2026-10-20**.
+- [x] Explicit approval to create Git tag / GitHub release `v0.1.0`: **approved 2026-10-20**.
+- [ ] Package-registry publication: **not part of v0.1.0; separate approval required**.
 - [ ] Separate safety/security review before any FT-016 physical integration work.
 
-Until those approvals occur, keep the development version in a PEP 440 development form such as `0.1.0.dev0`, do not advertise a stable public release, and do not represent FactoryTwin as a production-ready industrial digital twin.
+Future releases, package publication, or physical integration work require their own explicit approvals. FactoryTwin v0.1.0 must not be represented as a production-ready industrial digital twin.
 
-## Evidence to record for a release candidate
+## Evidence to record for v0.1.0
 
-When a release is explicitly authorized, record the candidate commit SHA, both supported Python job results, exact test count, wheel filename, installed-wheel smoke result, changelog entry, version/tag decision, and a confirmation that scope/safety wording still matches the executable capabilities.
+Record the release commit SHA, both supported Python job results, exact test count, wheel filename, installed-wheel smoke result, changelog entry, version/tag decision, and confirmation that scope/safety wording still matches executable capabilities.

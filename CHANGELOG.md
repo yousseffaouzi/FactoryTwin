@@ -1,8 +1,14 @@
 # Changelog
 
-FactoryTwin is pre-alpha software. This file records software-release readiness changes; it does not imply industrial validation or a production release.
+FactoryTwin is pre-alpha software. This file records software-release readiness changes; it does not imply industrial validation or production readiness.
 
 ## Unreleased
+
+No changes have been recorded after v0.1.0 yet.
+
+## 0.1.0 - 2026-10-20
+
+First approved software-only pre-alpha release.
 
 ### Added
 - Installable PEP 517/621 package metadata and isolated wheel validation.
@@ -17,8 +23,8 @@ FactoryTwin is pre-alpha software. This file records software-release readiness 
 ### Changed
 - Simulator internals were separated into deterministic engine, genealogy/fault layers, and explicit runtime composition while preserving the documented public import surface.
 - GitHub Actions now use Node-24-era action majors and validate a built wheel in a clean virtual environment.
-- README now documents trusted-checkout installation, validation boundaries, and the explicit release-decision gate.
+- README documents trusted-checkout installation, validation boundaries, and explicit release approval gates.
 
-## 0.1.0.dev0
-
-Current development version. No stable public release or PyPI publication is claimed for this version.
+### Release boundary
+- v0.1.0 remains pre-alpha research/demo software and is not a production-ready industrial digital twin, PLC/SCADA controller, safety system, or wire-compatible OPC UA server.
+- Package-registry publication is not part of this release.
