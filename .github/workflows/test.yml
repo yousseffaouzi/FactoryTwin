@@ -30,3 +30,14 @@ jobs:
           "$GITHUB_WORKSPACE/.wheel-venv/bin/python" -c "from importlib.metadata import version; from pathlib import Path; import factorytwin; import factorytwin.sim as sim; import factorytwin.__main__ as app; from factorytwin._version import __version__; assert version('factorytwin') == __version__; assert factorytwin.ProductionLine is sim.ProductionLine; assert (Path(app.ROOT) / 'index.html').is_file()"
           "$GITHUB_WORKSPACE/.wheel-venv/bin/python" -m factorytwin --help >/dev/null
           "$GITHUB_WORKSPACE/.wheel-venv/bin/factorytwin" --help >/dev/null
+
+  windows-test:
+    name: test (Windows, Python 3.12)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Run unit tests
+        run: python -m unittest discover -s tests -v
