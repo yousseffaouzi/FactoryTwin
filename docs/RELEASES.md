@@ -18,7 +18,7 @@ FactoryTwin uses PEP 440-compatible versions. During the pre-alpha period:
 
 ## Python support
 
-Package metadata requires Python 3.11 or newer. A version is only described as CI-tested after the workflow actually runs on that interpreter; metadata support and CI coverage are tracked separately.
+Package metadata requires Python 3.11 or newer. The CI support matrix currently validates the complete source suite, wheel build and isolated wheel installation on Python 3.11 and Python 3.12. Newer interpreter minors may satisfy package metadata, but they are not described as CI-tested until they are added to that matrix and pass it.
 
 ## Release gates
 
