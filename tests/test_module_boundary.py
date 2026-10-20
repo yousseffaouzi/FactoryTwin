@@ -3,9 +3,11 @@ import inspect
 import unittest
 
 import factorytwin
-from factorytwin import faults, genealogy, sim
+from factorytwin import fault_persistence, faults, genealogy, persistence, sim
 from factorytwin.engine import ProductionLine as EngineProductionLine
+from factorytwin.fault_persistence import FaultPersistentProductionLine
 from factorytwin.genealogy import GenealogyProductionLine
+from factorytwin.persistence import PersistentProductionLine
 from factorytwin.runtime import RuntimeProductionLine
 
 
@@ -79,6 +81,15 @@ class ModuleBoundaryTest(unittest.TestCase):
         sim_source = inspect.getsource(sim)
         self.assertEqual(sim_source.count("ProductionLine ="), 1)
         self.assertIn("ProductionLine = RuntimeProductionLine", sim_source)
+
+    def test_persistence_layers_depend_on_runtime_not_public_facade(self):
+        for module in (persistence, fault_persistence):
+            with self.subTest(module=module.__name__):
+                self.assertNotIn("from .sim import", inspect.getsource(module))
+        self.assertIs(PersistentProductionLine.__mro__[1], RuntimeProductionLine)
+        self.assertIs(FaultPersistentProductionLine.__mro__[1], PersistentProductionLine)
+        self.assertIs(persistence.ProductionLine, RuntimeProductionLine)
+        self.assertIs(fault_persistence.ProductionLine, RuntimeProductionLine)
 
 
 if __name__ == "__main__":
