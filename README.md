@@ -16,11 +16,13 @@
 - Optional local SQLite persistence with migration/recovery tests; default in-memory mode still works.
 - Additive production metrics and OEE reporting with explicit planned-time/ideal-cycle inputs; OEE is disabled when those inputs are not defined.
 - Local SSE snapshot streaming with reconnect/resync and ordinary snapshot polling as fallback.
-- Responsive accessible 2D factory-floor dashboard.
+- Responsive accessible 2D factory-floor dashboard with a read-only workpiece genealogy inspector.
 - Optional **in-process OPC-UA-style simulator adapter** for typed synthetic nodes and validated methods. It opens no industrial protocol socket and controls no physical equipment.
 - Python 3.11+ standard-library runtime for the simulator and server; no Docker, cloud account, or industrial hardware required.
 
 ## Quick start
+
+From a source checkout:
 
 ```bash
 python -m factorytwin
@@ -30,13 +32,26 @@ python -m factorytwin --blueprint config/assembly_line.json
 # open http://127.0.0.1:8766
 ```
 
+The HTTP server binds to `127.0.0.1` only.
+
+## Install from a trusted checkout
+
+FactoryTwin is not currently claimed as a published PyPI package. To exercise the same install path used by CI, install from a trusted checkout:
+
+```bash
+python -m pip install --no-deps .
+factorytwin
+```
+
+The package has no declared runtime dependencies. CI additionally builds a wheel and installs it into an isolated virtual environment from outside the repository checkout.
+
 Run the complete test suite:
 
 ```bash
 python -m unittest discover -s tests -v
 ```
 
-The HTTP server binds to loopback only. `GET /api/snapshot` intentionally advances one observation tick. Paused/faulted lines still advance observation time but do no productive work.
+`GET /api/snapshot` intentionally advances one observation tick. Paused/faulted lines still advance observation time but do no productive work.
 
 ## Python API compatibility
 
@@ -105,6 +120,7 @@ Core modules include:
 - `factorytwin/streaming.py` — local SSE transport/resync behavior.
 - `factorytwin/faults.py` / `fault_persistence.py` — multi-station fault model and recovery integration.
 - `factorytwin/opcua_sim.py` — socket-free OPC-UA-style simulator adapter.
+- `factorytwin/benchmark.py` — informational synthetic software benchmark reporter.
 - `web/index.html` — zero-build accessible 2D dashboard.
 - `TODO.md` — source task tracker.
 
@@ -121,6 +137,17 @@ FactoryTwin does not invent an OEE value when planned observation time or ideal-
 ## Protocol boundary
 
 The optional OPC-UA-style adapter is an in-process software mock intended to exercise namespace/method semantics. It is **not** a wire-compatible OPC UA server, does not listen on an OPC UA endpoint, and must not be represented as a plant integration.
+
+## Validation and release boundary
+
+Software correctness validation, synthetic performance reporting, version policy, and the release-decision checklist are documented separately:
+
+- [`docs/VALIDATION.md`](docs/VALIDATION.md) — bounded deterministic soak/recovery validation.
+- [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md) — environment-dependent software benchmark reporting; no real-time threshold.
+- [`docs/RELEASES.md`](docs/RELEASES.md) — versioning and approval policy.
+- [`docs/RELEASE_CHECKLIST.md`](docs/RELEASE_CHECKLIST.md) — automated gates versus manual release approvals.
+
+A green development branch is not permission to merge `main`, create a release/tag, publish a package, or begin physical integration work.
 
 ## Safety
 
