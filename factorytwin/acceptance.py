@@ -10,10 +10,8 @@ from __future__ import annotations
 import argparse
 import http.client
 import json
-import os
 import queue
 import re
-import signal
 import subprocess
 import sys
 import tempfile
@@ -64,23 +62,26 @@ def _control(port: int, action: str, station: str | None = None) -> dict:
     return data
 
 
+def _close_process_streams(process: subprocess.Popen[str]) -> None:
+    if process.stdin is not None and not process.stdin.closed:
+        process.stdin.close()
+    if process.stdout is not None and not process.stdout.closed:
+        process.stdout.close()
+
+
 def _start_server(database: Path) -> tuple[subprocess.Popen[str], int]:
-    creationflags = 0
-    if os.name == "nt":
-        creationflags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
-    env = os.environ.copy()
-    env["PYTHONUNBUFFERED"] = "1"
     process = subprocess.Popen(
-        [sys.executable, "-m", "factorytwin", "--database", str(database), "--port", "0"],
+        [sys.executable, "-m", "factorytwin", "--database", str(database),
+         "--port", "0", "--shutdown-on-stdin"],
+        stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
         encoding="utf-8",
         errors="replace",
         bufsize=1,
-        env=env,
-        creationflags=creationflags,
     )
+    _require(process.stdin is not None, "server stdin pipe was not created")
     _require(process.stdout is not None, "server stdout pipe was not created")
 
     ready: queue.Queue[str] = queue.Queue(maxsize=1)
@@ -96,6 +97,7 @@ def _start_server(database: Path) -> tuple[subprocess.Popen[str], int]:
     except queue.Empty as exc:
         process.kill()
         process.wait(timeout=5)
+        _close_process_streams(process)
         raise AcceptanceFailure("server did not report its loopback URL within 10 seconds") from exc
 
     match = _START_RE.fullmatch(line)
@@ -104,6 +106,7 @@ def _start_server(database: Path) -> tuple[subprocess.Popen[str], int]:
             process.kill()
             process.wait(timeout=5)
         remainder = process.stdout.read().strip() if process.stdout is not None else ""
+        _close_process_streams(process)
         detail = "\n".join(part for part in (line, remainder) if part)
         raise AcceptanceFailure(f"unexpected server startup output: {detail!r}")
 
@@ -117,17 +120,19 @@ def _start_server(database: Path) -> tuple[subprocess.Popen[str], int]:
 def _stop_server(process: subprocess.Popen[str]) -> str:
     if process.poll() is None:
         try:
-            if os.name == "nt":
-                process.send_signal(signal.CTRL_C_EVENT)
-            else:
-                process.send_signal(signal.SIGINT)
+            _require(process.stdin is not None and not process.stdin.closed,
+                     "server lifecycle stdin was unavailable")
+            process.stdin.close()
             process.wait(timeout=10)
         except (OSError, ValueError, subprocess.TimeoutExpired) as exc:
             process.kill()
             process.wait(timeout=5)
-            raise AcceptanceFailure("server did not stop cleanly after interrupt") from exc
+            _close_process_streams(process)
+            raise AcceptanceFailure("server did not stop cleanly after lifecycle shutdown") from exc
     output = process.stdout.read() if process.stdout is not None else ""
-    _require(process.returncode == 0, f"server exited with code {process.returncode}: {output}")
+    returncode = process.returncode
+    _close_process_streams(process)
+    _require(returncode == 0, f"server exited with code {returncode}: {output}")
     return output
 
 

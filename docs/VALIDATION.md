@@ -26,7 +26,7 @@ The acceptance scenario verifies that:
 - pause freezes productive processing while observation ticks continue;
 - a synthetic station fault interlocks productive processing and `resume` does not bypass it;
 - clearing a fault does not override an independent pause;
-- both child server processes stop cleanly by interrupt;
+- both child server processes stop cleanly through the harness lifecycle channel;
 - restarting the CLI against the same SQLite file recovers the previous session before the next observation tick;
 - completed/good counters and selected genealogy do not regress across restart; and
 - productive processing continues after recovery.

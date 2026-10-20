@@ -1,9 +1,10 @@
 """Local-only FactoryTwin demo server with persistence, metrics and SSE."""
 import argparse
 import json
+import sys
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from threading import Lock
+from threading import Lock, Thread
 from urllib.parse import unquote, urlsplit
 
 from .blueprint import DEFAULT_BLUEPRINT, FactoryBlueprint
@@ -169,6 +170,15 @@ class Handler(SimpleHTTPRequestHandler):
             self.respond(400, {"error": str(exc)})
 
 
+def _shutdown_when_stdin_closes(httpd: ThreadingHTTPServer) -> None:
+    """Private validation hook used by the subprocess acceptance harness."""
+    try:
+        sys.stdin.read(1)
+    except OSError:
+        pass
+    httpd.shutdown()
+
+
 def main(argv: list[str] | None = None):
     parser = argparse.ArgumentParser(description="FactoryTwin synthetic factory simulator")
     parser.add_argument("--blueprint", type=Path, help="validated local JSON station graph")
@@ -180,6 +190,7 @@ def main(argv: list[str] | None = None):
                         help="optional local JSON declaration enabling synthetic OEE")
     parser.add_argument("--port", type=int, default=8766,
                         help="loopback HTTP port (default: 8766; use 0 for an ephemeral test port)")
+    parser.add_argument("--shutdown-on-stdin", action="store_true", help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
     if not 0 <= args.port <= 65535:
         parser.error("--port must be between 0 and 65535")
@@ -198,6 +209,8 @@ def main(argv: list[str] | None = None):
     SIM.metrics_plan = metrics_plan
     STREAM = SnapshotStreamHub()
     httpd = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
+    if args.shutdown_on_stdin:
+        Thread(target=_shutdown_when_stdin_closes, args=(httpd,), daemon=True).start()
     actual_port = httpd.server_address[1]
     print(f"FactoryTwin (simulated factory): http://127.0.0.1:{actual_port}", flush=True)
     try:
