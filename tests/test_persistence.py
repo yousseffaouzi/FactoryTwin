@@ -1,4 +1,5 @@
 """FT-009: optional transactional SQLite persistence and recovery."""
+from contextlib import contextmanager
 from copy import deepcopy
 import json
 from pathlib import Path
@@ -51,8 +52,14 @@ class SQLitePersistenceTest(unittest.TestCase):
     def tearDown(self):
         self.temp.cleanup()
 
+    @contextmanager
     def connect(self):
-        return sqlite3.connect(self.path)
+        connection = sqlite3.connect(self.path)
+        try:
+            with connection:
+                yield connection
+        finally:
+            connection.close()
 
     def test_fresh_database_persists_operation_snapshot_and_events(self):
         line = PersistentProductionLine.open(self.path)
