@@ -6,9 +6,9 @@ from dataclasses import dataclass, field
 import json
 
 from .blueprint import FactoryBlueprint
+from .engine import MAX_REPLAY_OPERATIONS, LineState, TICK_DURATION_MS
 from .genealogy import GenealogyProductionLine
 from .quality import QualityScenario
-from .sim import MAX_REPLAY_OPERATIONS, LineState, TICK_DURATION_MS
 
 MULTI_FAULT_TRACE_SCHEMA = "factorytwin.trace.v4"
 
