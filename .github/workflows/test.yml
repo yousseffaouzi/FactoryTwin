@@ -17,6 +17,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Run unit tests
         run: python -m unittest discover -s tests -v
+      - name: Report synthetic benchmark
+        if: matrix.python-version == '3.12'
+        run: python -m factorytwin.benchmark --ticks 2000 --sqlite-ticks 100 --json
       - name: Build wheel
         run: python -m pip wheel . --no-deps --wheel-dir dist
       - name: Verify installed wheel
