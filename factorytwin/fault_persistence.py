@@ -10,7 +10,9 @@ from .engine import MAX_REPLAY_OPERATIONS
 from .faults import MULTI_FAULT_TRACE_SCHEMA
 from .persistence import PersistenceError, PersistentProductionLine, SQLiteStore, _parse_json
 from .quality import DEFAULT_QUALITY_SCENARIO, QualityScenario
-from .runtime import RuntimeProductionLine as ProductionLine
+from .runtime import RuntimeProductionLine
+
+ProductionLine = RuntimeProductionLine
 
 
 class FaultSQLiteStore(SQLiteStore):
@@ -118,9 +120,9 @@ class FaultPersistentProductionLine(PersistentProductionLine):
         session_id = self._session_id
         previous_event_sequence = self.event_sequence
         try:
-            # Skip PersistentProductionLine.step so the operation and any trace
-            # schema promotion are committed in one transaction below.
-            result = super(PersistentProductionLine, self).step()
+            # Deliberately bypass PersistentProductionLine.step so the operation
+            # and any trace-schema promotion are committed in one transaction.
+            result = RuntimeProductionLine.step(self)
             events = [deepcopy(event) for event in self.events
                       if event["seq"] > previous_event_sequence]
             schema = self.export_trace()["schema"]
@@ -137,8 +139,9 @@ class FaultPersistentProductionLine(PersistentProductionLine):
         previous_event_sequence = self.event_sequence
         store = self._store
         try:
-            # Call the simulator layer directly, not the FT-009 persistence wrapper.
-            super(PersistentProductionLine, self).control(action, station)
+            # Deliberately bypass the FT-009 persistence wrapper; this method
+            # commits the control plus any trace-schema promotion atomically.
+            RuntimeProductionLine.control(self, action, station)
             self._store = store
             self._session_id = old_session_id
             if action == "reset":
