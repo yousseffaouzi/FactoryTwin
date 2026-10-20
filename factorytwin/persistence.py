@@ -9,7 +9,7 @@ import sqlite3
 import uuid
 
 from .blueprint import DEFAULT_BLUEPRINT, FactoryBlueprint
-from .engine import CUSTOM_TRACE_SCHEMA, MAX_REPLAY_OPERATIONS, TRACE_SCHEMA
+from .engine import CUSTOM_TRACE_SCHEMA, MAX_REPLAY_OPERATIONS, TICK_DURATION_MS, TRACE_SCHEMA
 from .genealogy import QUALITY_TRACE_SCHEMA
 from .quality import DEFAULT_QUALITY_SCENARIO, QualityScenario
 from .runtime import RuntimeProductionLine as ProductionLine
@@ -274,7 +274,7 @@ class SQLiteStore:
                      (event_count != expected_events or min_seq != 1 or max_seq != expected_events))):
                 raise PersistenceError("persisted event journal is inconsistent")
             schema = session["trace_schema"]
-            trace = {"schema": schema, "tick_duration_ms": 1000,
+            trace = {"schema": schema, "tick_duration_ms": TICK_DURATION_MS,
                      "operations": operations, "final_state": final_state}
             if schema in (CUSTOM_TRACE_SCHEMA, QUALITY_TRACE_SCHEMA):
                 trace["blueprint"] = session["blueprint"]
