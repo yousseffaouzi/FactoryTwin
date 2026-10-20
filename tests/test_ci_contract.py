@@ -22,6 +22,13 @@ class CiContractTest(unittest.TestCase):
         self.assertIn("pip install --no-deps dist/factorytwin-*.whl", self.workflow)
         self.assertIn("cd /tmp", self.workflow)
 
+    def test_windows_python312_source_gate_is_explicit(self):
+        self.assertIn("  windows-test:\n", self.workflow)
+        windows_job = self.workflow.split("  windows-test:\n", 1)[1]
+        self.assertIn("runs-on: windows-latest", windows_job)
+        self.assertIn("python-version: '3.12'", windows_job)
+        self.assertIn("python -m unittest discover -s tests -v", windows_job)
+
 
 if __name__ == "__main__":
     unittest.main()
