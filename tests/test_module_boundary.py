@@ -3,7 +3,7 @@ import inspect
 import unittest
 
 import factorytwin
-from factorytwin import fault_persistence, faults, genealogy, persistence, sim
+from factorytwin import engine, fault_persistence, faults, genealogy, persistence, sim
 from factorytwin.engine import ProductionLine as EngineProductionLine
 from factorytwin.fault_persistence import FaultPersistentProductionLine
 from factorytwin.genealogy import GenealogyProductionLine
@@ -98,6 +98,15 @@ class ModuleBoundaryTest(unittest.TestCase):
         self.assertIn("RuntimeProductionLine.control(self, action, station)", source)
         self.assertIs(fault_persistence.RuntimeProductionLine, RuntimeProductionLine)
         self.assertIs(fault_persistence.ProductionLine, RuntimeProductionLine)
+
+    def test_persistence_recovery_uses_engine_tick_duration(self):
+        self.assertEqual(persistence.TICK_DURATION_MS, engine.TICK_DURATION_MS)
+        self.assertEqual(fault_persistence.TICK_DURATION_MS, engine.TICK_DURATION_MS)
+        for module in (persistence, fault_persistence):
+            with self.subTest(module=module.__name__):
+                source = inspect.getsource(module)
+                self.assertIn('"tick_duration_ms": TICK_DURATION_MS', source)
+                self.assertNotIn('"tick_duration_ms": 1000', source)
 
 
 if __name__ == "__main__":
